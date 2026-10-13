@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Full Cloud & Draft Sync Edition</title>
+    <title>Dialyse Command Center - Multi-Measurement Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -117,19 +117,25 @@
         .multi-check-label { width: 100px; font-weight: 600; color: #333; }
         .multi-checks { display: flex; gap: 8px; }
 
-        /* Bloeddruk & HR alert box */
-        .bp-alert {
-            padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 12px; font-weight: 600; text-align: center; display: none;
+        /* Bloeddruk metingen lijst */
+        .bp-entry-container {
+            max-height: 180px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
         }
-        .bp-alert-green { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .bp-alert-orange { background: #ffe8cc; color: #d97706; border: 1px solid #ffb86c; }
-        .bp-alert-red { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; animation: pulse 1.5s infinite; }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+        .bp-row {
+            background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; display: flex; flex-direction: column; gap: 6px;
         }
+        .bp-row-header {
+            display: flex; justify-content: space-between; align-items: center; font-size: 11px;
+        }
+        .bp-inputs {
+            display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; align-items: center;
+        }
+        .bp-tag {
+            font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; text-align: center;
+        }
+        .bp-tag-green { background: #d4edda; color: #155724; }
+        .bp-tag-orange { background: #ffe8cc; color: #d97706; }
+        .bp-tag-red { background: #f8d7da; color: #721c24; }
 
         .btn-action {
             margin-top: auto; padding: 8px; background: var(--win-blue); color: #fff;
@@ -304,33 +310,23 @@
             <button class="btn-action" onclick="slaGewichtOpDefinitief()">GEWICHT & TOEDIENING DEFINITIEF OPSLAAN & SYNC</button>
         </div>
 
-        <!-- VAK 3: BLOEDDRUK & HARTSLAG -->
+        <!-- VAK 3: MEERDERE BLOEDDRUK & HARTSLAG METINGEN -->
         <div class="dashboard-card">
             <div class="card-header">
                 <span>Vak 3: Bloeddruk & Hartslag</span>
                 <span class="draft-badge" id="draft-vak3">Tijdelijk opgeslagen</span>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group">
-                    <label>Systolisch (Bovendruk):</label>
-                    <input type="number" id="bp-sys" placeholder="bijv. 125" oninput="analyseerBloeddruk(); opslaanConceptVak3();">
-                </div>
-                <div class="form-group">
-                    <label>Diastolisch (Onderdruk):</label>
-                    <input type="number" id="bp-dia" placeholder="bijv. 75" oninput="analyseerBloeddruk(); opslaanConceptVak3();">
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-size: 11px; font-weight: 600; color: #555;">Metingenoverzicht:</label>
+                <button onclick="voegBpMetingToe()" style="padding: 3px 8px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">+ Meting Toevoegen</button>
             </div>
 
-            <div class="form-group">
-                <label>Hartslag (HR - BPM):</label>
-                <input type="number" id="bp-hr" placeholder="bijv. 72" oninput="analyseerBloeddruk(); opslaanConceptVak3();">
+            <div class="bp-entry-container" id="bp-metingen-lijst">
+                <!-- Dynamische metingen rijen -->
             </div>
 
-            <!-- WAARSCHUWINGSBOX -->
-            <div id="bp-alert-box" class="bp-alert"></div>
-
-            <button class="btn-action" style="margin-top: 15px;" onclick="slaBloeddrukOpDefinitief()">BLOEDDRUK DEFINITIEF OPSLAAN & SYNC</button>
+            <button class="btn-action" style="margin-top: 10px;" onclick="slaBloeddrukOpDefinitief()">BLOEDDRUK DEFINITIEF OPSLAAN & SYNC</button>
         </div>
 
         <!-- VAK 4: MEDICATIE & NOTITIES -->
@@ -352,6 +348,7 @@
         const radius = 78;
         const circumference = 2 * Math.PI * radius;
         let nursesList = ["Jan", "Sophie", "Mark"];
+        let bpMetingen = [];
         
         window.addEventListener('DOMContentLoaded', () => {
             const ring = document.getElementById('progress-ring-circle');
@@ -360,7 +357,6 @@
             
             document.getElementById('sheets-url-input').value = googleSheetsUrl;
 
-            // Laad opgeslagen concepten uit LocalStorage
             laadConcepten();
 
             if(googleSheetsUrl) {
@@ -409,17 +405,25 @@
             localStorage.setItem('draft_vak2', JSON.stringify(data));
         }
 
+        function verzamelBpMetingenVanScherm() {
+            let rijen = document.querySelectorAll('.bp-row');
+            let lijst = [];
+            rijen.forEach(row => {
+                let tijd = row.querySelector('.bp-tijd').value;
+                let sys = row.querySelector('.bp-sys').value;
+                let dia = row.querySelector('.bp-dia').value;
+                let hr = row.querySelector('.bp-hr').value;
+                lijst.push({ tijd, sys, dia, hr });
+            });
+            return lijst;
+        }
+
         function opslaanConceptVak3() {
-            let data = {
-                sys: document.getElementById('bp-sys').value,
-                dia: document.getElementById('bp-dia').value,
-                hr: document.getElementById('bp-hr').value
-            };
-            localStorage.setItem('draft_vak3', JSON.stringify(data));
+            bpMetingen = verzamelBpMetingenVanScherm();
+            localStorage.setItem('draft_vak3', JSON.stringify(bpMetingen));
         }
 
         function laadConcepten() {
-            // Vak 1 Concept
             let d1 = localStorage.getItem('draft_vak1');
             if(d1) {
                 let d = JSON.parse(d1);
@@ -430,7 +434,6 @@
                 berekenTijden();
             }
 
-            // Vak 2 Concept
             let d2 = localStorage.getItem('draft_vak2');
             if(d2) {
                 let d = JSON.parse(d2);
@@ -458,70 +461,90 @@
                 berekenGewichtEnUF();
             }
 
-            // Vak 3 Concept
             let d3 = localStorage.getItem('draft_vak3');
             if(d3) {
-                let d = JSON.parse(d3);
-                if(d.sys) document.getElementById('bp-sys').value = d.sys;
-                if(d.dia) document.getElementById('bp-dia').value = d.dia;
-                if(d.hr) document.getElementById('bp-hr').value = d.hr;
-                analyseerBloeddruk();
+                bpMetingen = JSON.parse(d3);
             }
+            if(bpMetingen.length === 0) {
+                // Voeg standaard 1 lege meting toe
+                let nuTijd = new Date().toTimeString().slice(0,5);
+                bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
+            }
+            renderBpMetingen();
         }
 
-        /* --- VAK 3: BLOEDDRUK & HARTSLAG ANALYSE & WAARSCHUWINGEN --- */
-        function analyseerBloeddruk() {
-            let sys = parseInt(document.getElementById('bp-sys').value) || 0;
-            let dia = parseInt(document.getElementById('bp-dia').value) || 0;
-            let hr = parseInt(document.getElementById('bp-hr').value) || 0;
+        /* --- VAK 3: MEERDERE BLOEDDRUK & HARTSLAG LOGICA --- */
+        function voegBpMetingToe() {
+            let nuTijd = new Date().toTimeString().slice(0,5);
+            bpMetingen = verzamelBpMetingenVanScherm();
+            bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
+            renderBpMetingen();
+            opslaanConceptVak3();
+        }
 
-            let box = document.getElementById('bp-alert-box');
+        function verwijderBpMeting(index) {
+            bpMetingen = verzamelBpMetingenVanScherm();
+            bpMetingen.splice(index, 1);
+            if(bpMetingen.length === 0) {
+                let nuTijd = new Date().toTimeString().slice(0,5);
+                bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
+            }
+            renderBpMetingen();
+            opslaanConceptVak3();
+        }
+
+        function renderBpMetingen() {
+            let container = document.getElementById('bp-metingen-lijst');
+            container.innerHTML = '';
+
+            bpMetingen.forEach((m, index) => {
+                let row = document.createElement('div');
+                row.className = 'bp-row';
+                row.innerHTML = `
+                    <div class="bp-row-header">
+                        <span style="font-weight: 600; color: #0078d7;">Meting #${index + 1}</span>
+                        <button class="nurse-del-btn" onclick="verwijderBpMeting(${index})">✕</button>
+                    </div>
+                    <div class="bp-inputs">
+                        <input type="time" class="bp-tijd" value="${m.tijd || ''}" onchange="opslaanConceptVak3()" style="padding: 5px; font-size: 11px;">
+                        <input type="number" class="bp-sys" placeholder="Sys" value="${m.sys || ''}" oninput="updateBpStatus(this); opslaanConceptVak3();" style="padding: 5px; font-size: 11px;">
+                        <input type="number" class="bp-dia" placeholder="Dia" value="${m.dia || ''}" oninput="updateBpStatus(this); opslaanConceptVak3();" style="padding: 5px; font-size: 11px;">
+                        <input type="number" class="bp-hr" placeholder="HR" value="${m.hr || ''}" oninput="updateBpStatus(this); opslaanConceptVak3();" style="padding: 5px; font-size: 11px;">
+                    </div>
+                    <div class="bp-status-tag"></div>
+                `;
+                container.appendChild(row);
+                
+                // Trigger direct status check voor ingevulde waarden
+                let sysIn = row.querySelector('.bp-sys');
+                if(m.sys || m.dia || m.hr) updateBpStatus(sysIn);
+            });
+        }
+
+        function updateBpStatus(el) {
+            let row = el.closest('.bp-row');
+            let sys = parseInt(row.querySelector('.bp-sys').value) || 0;
+            let dia = parseInt(row.querySelector('.bp-dia').value) || 0;
+            let hr = parseInt(row.querySelector('.bp-hr').value) || 0;
+            let tagContainer = row.querySelector('.bp-status-tag');
+
             if (!sys && !dia && !hr) {
-                box.style.display = 'none';
+                tagContainer.innerHTML = '';
                 return;
             }
 
-            box.style.display = 'block';
-            let waarschuwingen = [];
-            let status = 'green'; // green, orange, red
+            let status = 'green';
+            let msg = 'Optimaal';
 
-            // 1. Hypotensie (Rood)
-            if (sys > 0 && sys < 100) {
-                waarschuwingen.push("⚠️ LAAGE BLOEDDRUK (Hypotensie) - Let op krampen/duizeligheid!");
+            if ((sys > 0 && sys < 100) || (sys >= 180 || dia >= 110) || (hr > 0 && (hr < 50 || hr > 110))) {
                 status = 'red';
-            }
-            // 2. Ernstige Hypertensie (Rood)
-            else if (sys >= 180 || dia >= 110) {
-                waarschuwingen.push("🚨 ERNSTIGE HYPERTENSIE - Neem direct contact op!");
-                status = 'red';
-            }
-            // 3. Milde Hypertensie / Verhoogd (Oranje)
-            else if (sys >= 140 || dia >= 90) {
-                waarschuwingen.push("⚠️ Verhoogde Bloeddruk");
-                if (status !== 'red') status = 'orange';
+                msg = '🚨 KRITIEK';
+            } else if ((sys >= 140 || dia >= 90) || (hr >= 101 && hr <= 110)) {
+                status = 'orange';
+                msg = '⚠️ Verhoogd';
             }
 
-            // Hartslag controles
-            if (hr > 0) {
-                if (hr < 50) {
-                    waarschuwingen.push("⚠️ Trage Hartslag (Bradycardie < 50 BPM)");
-                    status = 'red';
-                } else if (hr > 110) {
-                    waarschuwingen.push("⚠️ Snelle Hartslag (Tachycardie > 110 BPM)");
-                    status = 'red';
-                } else if (hr >= 101 && hr <= 110) {
-                    waarschuwingen.push("⚠️ Verhoogde Hartslag");
-                    if (status !== 'red') status = 'orange';
-                }
-            }
-
-            if (waarschuwingen.length === 0) {
-                box.className = 'bp-alert bp-alert-green';
-                box.innerHTML = '✅ Normale Bloeddruk & Hartslag';
-            } else {
-                box.className = `bp-alert bp-alert-${status}`;
-                box.innerHTML = waarschuwingen.join('<br>');
-            }
+            tagContainer.innerHTML = `<div class="bp-tag bp-tag-${status}">${msg}</div>`;
         }
 
         /* --- CLOUD SYNC & UTILITIES --- */
@@ -615,11 +638,9 @@
                 }
 
                 if (data['dialyse_vak3']) {
-                    let d = JSON.parse(data['dialyse_vak3']);
-                    if(d.sys) document.getElementById('bp-sys').value = d.sys;
-                    if(d.dia) document.getElementById('bp-dia').value = d.dia;
-                    if(d.hr) document.getElementById('bp-hr').value = d.hr;
-                    analyseerBloeddruk();
+                    bpMetingen = JSON.parse(data['dialyse_vak3']);
+                    renderNurses();
+                    renderBpMetingen();
                 }
             } catch(e) {
                 console.log("Kon data niet ophalen uit Google Sheets.");
@@ -826,13 +847,9 @@
         }
 
         function slaBloeddrukOpDefinitief() {
-            let data = {
-                sys: document.getElementById('bp-sys').value,
-                dia: document.getElementById('bp-dia').value,
-                hr: document.getElementById('bp-hr').value
-            };
-            syncToGoogle('dialyse_vak3', data);
-            alert("Bloeddruk & Hartslag (Vak 3) definitief opgeslagen & gesynchroniseerd!");
+            bpMetingen = verzamelBpMetingenVanScherm();
+            syncToGoogle('dialyse_vak3', bpMetingen);
+            alert("Bloeddruk & Hartslag metingen (Vak 3) definitief opgeslagen & gesynchroniseerd!");
         }
     </script>
 </body>
