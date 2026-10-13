@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Planning & Archief Edition</title>
+    <title>Dialyse Command Center - Single Save Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -37,7 +37,7 @@
         }
         .tab-btn:hover:not(.active) { background: #e0e0e0; }
 
-        .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 20px; overflow-y: auto; }
+        .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 15px 20px 20px 20px; overflow-y: auto; }
         .tab-content.active { display: block; }
 
         .sync-container {
@@ -52,33 +52,33 @@
         .sync-btn:hover, .fullscreen-btn:hover { background: #005a9e; }
 
         .dashboard-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; height: 100%;
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 15px; height: calc(100% - 45px);
         }
 
         .dashboard-card {
             background: var(--card-bg); border: 1px solid var(--border-color);
-            border-radius: 4px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-radius: 4px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             display: flex; flex-direction: column; overflow-y: auto; position: relative;
         }
         .card-header {
-            font-size: 14px; font-weight: 600; color: var(--win-blue);
-            margin-bottom: 15px; border-bottom: 2px solid var(--win-blue); padding-bottom: 6px;
+            font-size: 13px; font-weight: 600; color: var(--win-blue);
+            margin-bottom: 12px; border-bottom: 2px solid var(--win-blue); padding-bottom: 5px;
             text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;
         }
 
         .draft-badge { font-size: 10px; font-weight: normal; text-transform: none; color: #888; background: #eee; padding: 2px 6px; border-radius: 3px; }
 
-        .form-group { margin-bottom: 10px; }
+        .form-group { margin-bottom: 8px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 3px; }
         .form-group input[type="number"], .form-group input[type="text"], .form-group input[type="datetime-local"], .form-group select, .form-group textarea {
-            width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
+            width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; background: #fafafa;
         }
 
-        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 8px; margin-top: 8px; font-size: 11px; line-height: 1.4; }
+        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 8px; margin-top: 6px; font-size: 11px; line-height: 1.4; }
 
         /* Ronde Klok */
         .circular-timer-container {
-            position: relative; width: 170px; height: 170px; margin: 10px auto;
+            position: relative; width: 150px; height: 150px; margin: 8px auto;
             display: flex; align-items: center; justify-content: center;
             background: #1b1b1b; border-radius: 50%; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
         }
@@ -86,26 +86,35 @@
         .progress-ring-bg { stroke: #333; }
         .progress-ring-fill { stroke: #ff4d4d; transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease; stroke-linecap: round; }
         .timer-center { position: absolute; text-align: center; }
-        .countdown-label { font-size: 10px; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
-        .countdown-timer { font-size: 18px; font-weight: bold; font-family: monospace; color: #fff; }
+        .countdown-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
+        .countdown-timer { font-size: 16px; font-weight: bold; font-family: monospace; color: #fff; }
 
-        .nurse-box { background: #fafafa; border: 1px solid #ddd; padding: 10px; border-radius: 3px; margin-top: 10px; }
-        .nurse-checkbox-list { max-height: 70px; overflow-y: auto; margin-top: 5px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #eee; padding-top: 5px; }
-        .nurse-item-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; background: #fff; border: 1px solid #eee; padding: 3px 5px; }
-        .nurse-del-btn { background: #e81123; color: #fff; border: none; border-radius: 50%; width: 15px; height: 15px; font-size: 8px; cursor: pointer; }
+        .nurse-box { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 3px; margin-top: 8px; }
+        .nurse-checkbox-list { max-height: 60px; overflow-y: auto; margin-top: 4px; display: flex; flex-direction: column; gap: 3px; border-top: 1px solid #eee; padding-top: 4px; }
+        .nurse-item-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; background: #fff; border: 1px solid #eee; padding: 2px 4px; }
+        .nurse-del-btn { background: #e81123; color: #fff; border: none; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; cursor: pointer; }
 
-        .toediening-box { border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 12px; }
-        .toediening-title { font-size: 12px; font-weight: 700; color: var(--win-blue); margin-bottom: 10px; }
-        .checkbox-group { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+        .toediening-box { border-top: 1px dashed #ccc; margin-top: 10px; padding-top: 8px; }
+        .toediening-title { font-size: 11px; font-weight: 700; color: var(--win-blue); margin-bottom: 6px; }
+        .checkbox-group { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; margin-bottom: 6px; }
 
-        .bp-entry-container { max-height: 160px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .bp-row { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; }
-        .bp-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; }
+        .bp-entry-container { max-height: 140px; overflow-y: auto; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .bp-row { background: #fafafa; border: 1px solid #ddd; padding: 6px; border-radius: 4px; }
+        .bp-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 4px; }
 
-        .btn-action { margin-top: auto; padding: 8px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; font-weight: 600; cursor: pointer; font-size: 12px; }
+        /* Centrale Opslaan Knop */
+        .global-save-bar {
+            height: 38px; margin-top: 10px; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-global-save {
+            width: 100%; height: 100%; background: #28a745; color: #fff; border: none; border-radius: 4px;
+            font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-global-save:hover { background: #218838; }
 
         /* PLANNING & HISTORIE STYLES */
-        .plan-table, .history-card { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
+        .plan-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
         .plan-table th, .plan-table td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
         .plan-table th { background: #0078d7; color: white; }
 
@@ -118,7 +127,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V1.5</span>
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V1.6</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -171,9 +180,9 @@
 
                 <!-- KLOK -->
                 <div class="circular-timer-container">
-                    <svg class="progress-ring" width="170" height="170">
-                        <circle class="progress-ring-bg" stroke-width="12" fill="transparent" r="72" cx="85" cy="85"/>
-                        <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="12" fill="transparent" r="72" cx="85" cy="85"/>
+                    <svg class="progress-ring" width="150" height="150">
+                        <circle class="progress-ring-bg" stroke-width="10" fill="transparent" r="62" cx="75" cy="75"/>
+                        <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="10" fill="transparent" r="62" cx="75" cy="75"/>
                     </svg>
                     <div class="timer-center">
                         <div class="countdown-label">Resterend</div>
@@ -190,8 +199,6 @@
                         <button onclick="addNurse()" style="padding: 3px 6px; background: #3d9970; color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">Add</button>
                     </div>
                 </div>
-
-                <button class="btn-action" onclick="slaBehandelingOpDefinitief()">BEHANDELING DEFINITIEF OPSLAAN & SYNC</button>
             </div>
 
             <!-- VAK 2 -->
@@ -241,8 +248,6 @@
                         <label class="checkbox-group"><input type="checkbox" id="chk-ijzer" onchange="opslaanConceptVak2()"> IJzer</label>
                     </div>
                 </div>
-
-                <button class="btn-action" onclick="slaGewichtOpDefinitief()">GEWICHT DEFINITIEF OPSLAAN & SYNC</button>
             </div>
 
             <!-- VAK 3 -->
@@ -252,7 +257,6 @@
                     <button onclick="voegBpMetingToe()" style="padding: 2px 6px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; font-size: 10px; cursor: pointer;">+ Meting</button>
                 </div>
                 <div class="bp-entry-container" id="bp-metingen-lijst"></div>
-                <button class="btn-action" style="margin-top: 10px;" onclick="slaBloeddrukOpDefinitief()">BLOEDDRUK DEFINITIEF OPSLAAN & SYNC</button>
             </div>
 
             <!-- VAK 4 -->
@@ -261,9 +265,15 @@
                     <span>Vak 4: Notities</span>
                 </div>
                 <textarea id="notities-text" placeholder="Typ hier opmerkingen..." oninput="opslaanConceptVak4()" style="flex-grow: 1; resize: none; padding: 8px; font-size: 12px; border: 1px solid #ccc;"></textarea>
-                <button class="btn-action" style="margin-top: 10px;" onclick="slaNotitiesOpDefinitief()">NOTITIES DEFINITIEF OPSLAAN & SYNC</button>
             </div>
 
+        </div>
+
+        <!-- EÉN CENTRALE OPSLAAN KNOP VOOR ALLES -->
+        <div class="global-save-bar">
+            <button class="btn-global-save" onclick="slaSessieDefinitiefOpOpEenRegel()">
+                <span>💾</span> HELE DIALYSE DEFINITIEF OPSLAAN & SYNC
+            </button>
         </div>
     </div>
 
@@ -293,7 +303,7 @@
                 <input type="text" id="plan-note" placeholder="bijv. Shuntcontrole gepland...">
             </div>
 
-            <button class="btn-action" style="margin-bottom: 20px;" onclick="voegPlanningToe()">VOEG TOE AAN PLANNING</button>
+            <button style="margin-bottom: 20px; padding: 8px; background: var(--win-blue); color:#fff; border:none; border-radius:3px; cursor:pointer;" onclick="voegPlanningToe()">VOEG TOE AAN PLANNING</button>
 
             <div class="card-header">
                 <span>📋 Geplande Behandelingen</span>
@@ -308,9 +318,7 @@
                         <th>Actie</th>
                     </tr>
                 </thead>
-                <tbody id="plan-table-body">
-                    <!-- Dynamische planning rijen -->
-                </tbody>
+                <tbody id="plan-table-body"></tbody>
             </table>
         </div>
     </div>
@@ -318,17 +326,14 @@
     <!-- TAB 3: HISTORIE & ARCHIEF -->
     <div id="tab-historie" class="tab-content">
         <div style="max-width: 900px; margin: 0 auto;">
-            
             <div class="record-navigator">
                 <button class="nav-btn" id="btn-prev-rec" onclick="bladerRecord(-1)">◀ Vorige Record</button>
                 <span style="font-weight: 600; font-size: 14px;" id="record-counter-text">Record 0 van 0</span>
                 <button class="nav-btn" id="btn-next-rec" onclick="bladerRecord(1)">Volgende Record ▶</button>
             </div>
-
             <div id="history-record-view" class="dashboard-card" style="min-height: 400px;">
                 <p style="text-align: center; color: #888; padding-top: 50px;">Geen afgeronde behandelingen (>= 4:00 uur) gevonden in het archief.</p>
             </div>
-
         </div>
     </div>
 
@@ -337,7 +342,7 @@
         let actieveEindTijd = null;
         let googleSheetsUrl = localStorage.getItem('google_sheets_url') || '';
         
-        const radius = 72;
+        const radius = 62;
         const circumference = 2 * Math.PI * radius;
         let nursesList = ["Jan", "Sophie", "Mark"];
         let geselecteerdeNurses = [];
@@ -379,14 +384,31 @@
             }
         }
 
+        /* --- 1 SINGLE SAVE FUNCTIE VOOR ALLE VAKKEN --- */
+        function slaSessieDefinitiefOpOpEenRegel() {
+            let v1 = localStorage.getItem('draft_vak1') ? JSON.parse(localStorage.getItem('draft_vak1')) : {};
+            let v2 = localStorage.getItem('draft_vak2') ? JSON.parse(localStorage.getItem('draft_vak2')) : {};
+            let v3 = localStorage.getItem('draft_vak3') ? JSON.parse(localStorage.getItem('draft_vak3')) : [];
+            let v4 = localStorage.getItem('draft_vak4') || '';
+
+            let completeSessie = {
+                datumSync: new Date().toISOString(),
+                behandeling: v1,
+                gewichtEnToediening: v2,
+                bloeddrukMetingen: v3,
+                notities: v4
+            };
+
+            syncToGoogle('dialyse_sessie_compleet', completeSessie);
+            alert("De gehele dialysesessie is succesvol als 1 regel opgeslagen & gesynchroniseerd naar Google Sheets!");
+        }
+
         /* --- AUTOMATISCHE GEREED CHECK (>= 4:00 UUR) --- */
         function controleerGereedStatus() {
             if (!actieveStartTijd) return;
             let nu = new Date();
-            let verstrekenMs = nu - actieveStartTijd;
-            let verstrekenUren = verstrekenMs / (1000 * 60 * 60);
+            let verstrekenUren = (nu - actieveStartTijd) / (1000 * 60 * 60);
 
-            // Als verstreken duur >= 4.0 uur is, markeer en archiveer
             if (verstrekenUren >= 4.0) {
                 let d1 = localStorage.getItem('draft_vak1');
                 let d2 = localStorage.getItem('draft_vak2');
@@ -405,7 +427,6 @@
                     historieRecords.unshift(voltooidRecord);
                     syncToGoogle('dialyse_historie', historieRecords);
                     
-                    // Wis huidige concept voor nieuwe sessie
                     localStorage.removeItem('draft_vak1');
                     localStorage.removeItem('draft_vak2');
                     localStorage.removeItem('draft_vak3');
@@ -421,7 +442,6 @@
             let datum = document.getElementById('plan-datum').value;
             let type = document.getElementById('plan-type').value;
             let note = document.getElementById('plan-note').value;
-
             if(!datum) { alert("Kies een datum/tijd!"); return; }
 
             planningLijst.push({ datum, type, note });
@@ -467,7 +487,6 @@
 
             counter.innerText = `Record ${huidigRecordIndex + 1} van ${historieRecords.length}`;
             let rec = historieRecords[huidigRecordIndex];
-
             let bpTekst = (rec.vak3 || []).map(b => `${b.tijd}: ${b.sys}/${b.dia} (HR: ${b.hr})`).join('<br>');
 
             view.innerHTML = `
@@ -543,7 +562,7 @@
             let container = document.getElementById('bp-metingen-lijst'); container.innerHTML = '';
             bpMetingen.forEach((m, idx) => {
                 let row = document.createElement('div'); row.className = 'bp-row';
-                row.innerHTML = `<div style="display:flex; justify-style:space-between;"><span style="font-size:10px; font-weight:bold; color:#0078d7;">Meting #${idx+1}</span><button class="nurse-del-btn" onclick="verwijderBpMeting(${idx})">✕</button></div>
+                row.innerHTML = `<div style="display:flex; justify-content:space-between;"><span style="font-size:10px; font-weight:bold; color:#0078d7;">Meting #${idx+1}</span><button class="nurse-del-btn" onclick="verwijderBpMeting(${idx})">✕</button></div>
                 <div class="bp-inputs"><input type="time" class="bp-tijd" value="${m.tijd||''}" onchange="opslaanConceptVak3()"><input type="number" class="bp-sys" placeholder="Sys" value="${m.sys||''}" oninput="opslaanConceptVak3()"><input type="number" class="bp-dia" placeholder="Dia" value="${m.dia||''}" oninput="opslaanConceptVak3()"><input type="number" class="bp-hr" placeholder="HR" value="${m.hr||''}" oninput="opslaanConceptVak3()"></div>`;
                 container.appendChild(row);
             });
@@ -600,11 +619,6 @@
                 if(data['dialyse_historie']) { historieRecords = JSON.parse(data['dialyse_historie']); renderHistorie(); }
             } catch(e){}
         }
-
-        function slaBehandelingOpDefinitief() { syncToGoogle('dialyse_vak1', JSON.parse(localStorage.getItem('draft_vak1'))); alert("Behandeling (Vak 1) opgeslagen!"); }
-        function slaGewichtOpDefinitief() { syncToGoogle('dialyse_vak2', JSON.parse(localStorage.getItem('draft_vak2'))); alert("Gewicht (Vak 2) opgeslagen!"); }
-        function slaBloeddrukOpDefinitief() { syncToGoogle('dialyse_vak3', JSON.parse(localStorage.getItem('draft_vak3'))); alert("Bloeddruk (Vak 3) opgeslagen!"); }
-        function slaNotitiesOpDefinitief() { syncToGoogle('dialyse_vak4', localStorage.getItem('draft_vak4')); alert("Notities (Vak 4) opgeslagen!"); }
     </script>
 </body>
 </html>
