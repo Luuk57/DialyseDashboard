@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Multi-Measurement Edition</title>
+    <title>Dialyse Command Center - Full Cloud Sync Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -62,10 +62,11 @@
         .form-group input[type="number"], 
         .form-group input[type="text"], 
         .form-group input[type="datetime-local"], 
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
         }
-        .form-group input:focus, .form-group select:focus { background: #fff; border-color: var(--win-blue); outline: none; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #fff; border-color: var(--win-blue); outline: none; }
 
         .calc-box {
             background: #eef6fc; border-left: 4px solid var(--win-blue);
@@ -148,7 +149,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1, 2 & 3</span>
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// DASHBOARD</span>
         </div>
         <div style="display: flex; align-items: center; gap: 15px;">
             <div class="sync-container">
@@ -310,7 +311,7 @@
             <button class="btn-action" onclick="slaGewichtOpDefinitief()">GEWICHT & TOEDIENING DEFINITIEF OPSLAAN & SYNC</button>
         </div>
 
-        <!-- VAK 3: MEERDERE BLOEDDRUK & HARTSLAG METINGEN -->
+        <!-- VAK 3: BLOEDDRUK & HARTSLAG -->
         <div class="dashboard-card">
             <div class="card-header">
                 <span>Vak 3: Bloeddruk & Hartslag</span>
@@ -329,13 +330,19 @@
             <button class="btn-action" style="margin-top: 10px;" onclick="slaBloeddrukOpDefinitief()">BLOEDDRUK DEFINITIEF OPSLAAN & SYNC</button>
         </div>
 
-        <!-- VAK 4: MEDICATIE & NOTITIES -->
+        <!-- VAK 4: NOTITIES -->
         <div class="dashboard-card">
             <div class="card-header">
-                <span>Vak 4: Medicatie & Notities</span>
+                <span>Vak 4: Notities</span>
                 <span class="draft-badge" id="draft-vak4">Tijdelijk opgeslagen</span>
             </div>
-            <p style="font-size: 11px; color: #777;">Wordt hierna ingericht...</p>
+            
+            <div class="form-group" style="flex-grow: 1; display: flex; flex-direction: column;">
+                <label>Behandelingsnotities & Opmerkingen:</label>
+                <textarea id="notities-text" placeholder="Typ hier bijzonderheden, symptomen of notities over de behandeling..." oninput="opslaanConceptVak4()" style="flex-grow: 1; resize: none; padding: 10px; font-family: inherit; font-size: 12px; line-height: 1.4; border: 1px solid #ccc; border-radius: 3px; background: #fafafa;"></textarea>
+            </div>
+
+            <button class="btn-action" onclick="slaNotitiesOpDefinitief()">NOTITIES DEFINITIEF OPSLAAN & SYNC</button>
         </div>
 
     </div>
@@ -423,6 +430,11 @@
             localStorage.setItem('draft_vak3', JSON.stringify(bpMetingen));
         }
 
+        function opslaanConceptVak4() {
+            let notities = document.getElementById('notities-text').value;
+            localStorage.setItem('draft_vak4', notities);
+        }
+
         function laadConcepten() {
             let d1 = localStorage.getItem('draft_vak1');
             if(d1) {
@@ -466,11 +478,15 @@
                 bpMetingen = JSON.parse(d3);
             }
             if(bpMetingen.length === 0) {
-                // Voeg standaard 1 lege meting toe
                 let nuTijd = new Date().toTimeString().slice(0,5);
                 bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
             }
             renderBpMetingen();
+
+            let d4 = localStorage.getItem('draft_vak4');
+            if(d4) {
+                document.getElementById('notities-text').value = d4;
+            }
         }
 
         /* --- VAK 3: MEERDERE BLOEDDRUK & HARTSLAG LOGICA --- */
@@ -515,7 +531,6 @@
                 `;
                 container.appendChild(row);
                 
-                // Trigger direct status check voor ingevulde waarden
                 let sysIn = row.querySelector('.bp-sys');
                 if(m.sys || m.dia || m.hr) updateBpStatus(sysIn);
             });
@@ -639,8 +654,12 @@
 
                 if (data['dialyse_vak3']) {
                     bpMetingen = JSON.parse(data['dialyse_vak3']);
-                    renderNurses();
                     renderBpMetingen();
+                }
+
+                if (data['dialyse_vak4']) {
+                    let notities = JSON.parse(data['dialyse_vak4']);
+                    document.getElementById('notities-text').value = notities;
                 }
             } catch(e) {
                 console.log("Kon data niet ophalen uit Google Sheets.");
@@ -850,6 +869,12 @@
             bpMetingen = verzamelBpMetingenVanScherm();
             syncToGoogle('dialyse_vak3', bpMetingen);
             alert("Bloeddruk & Hartslag metingen (Vak 3) definitief opgeslagen & gesynchroniseerd!");
+        }
+
+        function slaNotitiesOpDefinitief() {
+            let notities = document.getElementById('notities-text').value;
+            syncToGoogle('dialyse_vak4', notities);
+            alert("Notities (Vak 4) definitief opgeslagen & gesynchroniseerd!");
         }
     </script>
 </body>
