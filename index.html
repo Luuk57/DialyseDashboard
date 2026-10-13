@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Google Sync Edition</title>
+    <title>Dialyse Command Center - Direct Sync Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -24,11 +24,18 @@
         .win-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
         .win-title span { color: var(--win-blue); }
         
-        .sync-btn {
-            background: #eef6fc; border: 1px solid var(--win-blue); color: var(--win-blue);
-            padding: 5px 12px; border-radius: 3px; font-size: 12px; font-weight: 600; cursor: pointer;
+        .sync-container {
+            display: flex; align-items: center; gap: 8px; background: #eef6fc;
+            padding: 4px 8px; border-radius: 4px; border: 1px solid #cce4f7;
         }
-        .sync-btn:hover { background: var(--win-blue); color: #fff; }
+        .sync-input {
+            width: 260px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;
+        }
+        .sync-btn {
+            background: var(--win-blue); border: none; color: #fff;
+            padding: 4px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer;
+        }
+        .sync-btn:hover { background: #005a9e; }
 
         .dashboard-container {
             width: 100%; height: calc(100vh - 50px); padding: 20px;
@@ -102,7 +109,12 @@
             <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1 & VAK 2</span>
         </div>
         <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="sync-btn" onclick="openSyncSettings()">☁️ Google Sync Instellingen</button>
+            <!-- DIRECT ZICHTBARE SYNC INVOER -->
+            <div class="sync-container">
+                <span style="font-size: 11px; font-weight: 600; color: #0078d7;">☁️ Google Sheet URL:</span>
+                <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL...">
+                <button class="sync-btn" onclick="bewaarSyncUrl()">Opslaan</button>
+            </div>
             <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
         </div>
     </div>
@@ -231,6 +243,10 @@
             const ring = document.getElementById('progress-ring-circle');
             ring.style.strokeDasharray = `${circumference} ${circumference}`;
             ring.style.strokeDashoffset = circumference;
+            
+            // Laad eventuele opgeslagen URL direct in het invoerveld
+            document.getElementById('sheets-url-input').value = googleSheetsUrl;
+
             renderNurses();
             laadLokaleData();
             if(googleSheetsUrl) syncFromGoogle();
@@ -241,14 +257,12 @@
             updateCountdown();
         }, 1000);
 
-        function openSyncSettings() {
-            let url = prompt("Plak hier je Google Sheets Web App URL:", googleSheetsUrl);
-            if (url !== null) {
-                googleSheetsUrl = url.trim();
-                localStorage.setItem('google_sheets_url', googleSheetsUrl);
-                alert("Google Sync URL opgeslagen!");
-                syncFromGoogle();
-            }
+        function bewaarSyncUrl() {
+            let val = document.getElementById('sheets-url-input').value.trim();
+            googleSheetsUrl = val;
+            localStorage.setItem('google_sheets_url', googleSheetsUrl);
+            alert("Google Sheets URL opgeslagen!");
+            if(googleSheetsUrl) syncFromGoogle();
         }
 
         async function syncToGoogle(key, valueObj) {
@@ -289,7 +303,7 @@
                     berekenGewichtEnUF();
                 }
             } catch(e) {
-                console.log("Kon data niet ophalen uit Google Sheets (mogelijk CORS of lege sheet).");
+                console.log("Kon data niet ophalen uit Google Sheets.");
             }
         }
 
@@ -460,7 +474,7 @@
             };
             localStorage.setItem('dialyse_vak1', JSON.stringify(data));
             syncToGoogle('dialyse_vak1', data);
-            alert("Behandeling opgeslagen & gesynchroniseerd met Google Sheets!");
+            alert("Behandeling opgeslagen & gesynchroniseerd!");
         }
 
         function slaGewichtOp() {
@@ -473,7 +487,7 @@
             };
             localStorage.setItem('dialyse_vak2', JSON.stringify(data));
             syncToGoogle('dialyse_vak2', data);
-            alert("Gewicht & UF opgeslagen & gesynchroniseerd met Google Sheets!");
+            alert("Gewicht & UF opgeslagen & gesynchroniseerd!");
         }
 
         function laadLokaleData() {
