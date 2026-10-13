@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialyse Behandelingssysteem - Windows Edition</title>
+    <style>
+        :root {
+            --win-blue: #0078d7;
+            --win-bg: #f3f3f3;
+            --win-dark: #202020;
+            --card-bg: #ffffff;
+            --border-color: #e1e1e1;
+            --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-ui); }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: var(--win-bg); color: var(--win-dark); }
+
+        /* Windows Bovenbalk / Header */
+        .win-header {
+            height: 50px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+        }
+        .win-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .win-title span { color: var(--win-blue); }
+
+        /* Dashboard Grid Layout (Verdeeld over vakken) */
+        .dashboard-container {
+            width: 100%; height: calc(100vh - 50px); padding: 20px;
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px;
+        }
+
+        /* Vak / Dashboard Kaart */
+        .dashboard-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 4px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .card-header {
+            font-size: 14px; font-weight: 600; color: var(--win-blue);
+            margin-bottom: 15px; border-bottom: 2px solid var(--win-blue); padding-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* Formulier elementen binnen vak 1 */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 4px; }
+        .form-group input {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
+        }
+        .form-group input:focus { background: #fff; border-color: var(--win-blue); outline: none; }
+
+        /* Berekende resultaten / statistieken vlak */
+        .calc-box {
+            background: #eef6fc; border-left: 4px solid var(--win-blue);
+            padding: 10px; margin-top: 10px; font-size: 12px; line-height: 1.5;
+        }
+        .calc-box b { color: #000; }
+
+        .btn-action {
+            margin-top: 10px; padding: 10px; background: var(--win-blue); color: #fff;
+            border: none; border-radius: 3px; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s;
+        }
+        .btn-action:hover { background: #005a9e; }
+    </style>
+</head>
+<body>
+
+    <!-- Windows Koptekst -->
+    <div class="win-header">
+        <div class="win-title">
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1: BEHANDELING</span>
+        </div>
+        <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
+    </div>
+
+    <!-- Dashboard Raster -->
+    <div class="dashboard-container">
+        
+        <!-- VAK 1: BEHANDELING -->
+        <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
+            <div class="card-header">Vak 1: Behandeling & Tijden</div>
+            
+            <div class="form-group">
+                <label>Afspraak Datum & Tijd:</label>
+                <input type="datetime-local" id="t-afspraak" oninput="berekenTijden()">
+            </div>
+            
+            <div class="form-group">
+                <label>Daadwerkelijke Aansluit Tijd:</label>
+                <input type="datetime-local" id="t-aansluit" oninput="berekenTijden()">
+            </div>
+
+            <div class="form-group">
+                <label>Daadwerkelijke Afsluit Tijd:</label>
+                <input type="datetime-local" id="t-afsluit" oninput="berekenTijden()">
+            </div>
+
+            <!-- Berekende resultaten -->
+            <div class="calc-box" id="resultaten-tijden">
+                <b>Duur Behandeling:</b> nog niet berekend<br>
+                <b>Verschil met Afspraak:</b> nog niet berekend
+            </div>
+
+            <button class="btn-action" onclick="slaBehandelingOp()">BEHANDELING OPSLAAN</button>
+        </div>
+
+        <!-- VAK 2: (Toekomstig uit te breiden) -->
+        <div class="dashboard-card">
+            <div class="card-header">Vak 2: Vocht / UF & Gewicht</div>
+            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+        </div>
+
+        <!-- VAK 3: (Toekomstig uit te breiden) -->
+        <div class="dashboard-card">
+            <div class="card-header">Vak 3: Bloeddruk & Hartslag</div>
+            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+        </div>
+
+        <!-- VAK 4: (Toekomstig uit te breiden) -->
+        <div class="dashboard-card">
+            <div class="card-header">Vak 4: Medicatie & Notities</div>
+            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+        </div>
+
+        <!-- VAK 5: (Toekomstig uit te breiden) -->
+        <div class="dashboard-card">
+            <div class="card-header">Vak 5: Overzicht / Google Sync</div>
+            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+        </div>
+
+    </div>
+
+    <script>
+        // Systeem klok in de header
+        setInterval(() => {
+            document.getElementById('system-clock').innerText = new Date().toLocaleString();
+        }, 1000);
+
+        // Automatische tijdberekeningen zodra velden wijzigen
+        function berekenTijden() {
+            let afspraakVal = document.getElementById('t-afspraak').value;
+            let aansluitVal = document.getElementById('t-aansluit').value;
+            let afsluitVal = document.getElementById('t-afsluit').value;
+
+            let resBox = document.getElementById('resultaten-tijden');
+
+            let duurTekst = "Niet volledig ingevuld";
+            let verschilTekst = "Niet volledig ingevuld";
+
+            // 1. Bereken Duur Behandeling (Afsluit - Aansluit)
+            if (aansluitVal && afsluitVal) {
+                let aansluit = new Date(aansluitVal);
+                let afsluit = new Date(afsluitVal);
+                let diffMs = afsluit - aansluit;
+                
+                if (diffMs > 0) {
+                    let uren = Math.floor(diffMs / (1000 * 60 * 60));
+                    let minuten = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    duurTekst = `${uren} uur en ${minuten} minuten`;
+                } else {
+                    duurTekst = "<span style='color:red;'>Afsluiting moet na aansluiting zijn!</span>";
+                }
+            }
+
+            // 2. Bereken Verschil Aansluiting met Afspraak
+            if (afspraakVal && aansluitVal) {
+                let afspraak = new Date(afspraakVal);
+                let aansluit = new Date(aansluitVal);
+                let diffAfspraakMs = aansluit - afspraak;
+                
+                let minVerschil = Math.round(diffAfspraakMs / (1000 * 60));
+                if (minVerschil === 0) {
+                    verschilTekst = "Exact op tijd! (0 min)";
+                } else if (minVerschil > 0) {
+                    verschilTekst = `<span style='color:orange;'>${minVerschil} minuten te laat</span>`;
+                } else {
+                    verschilTekst = `<span style='color:green;'>${Math.abs(minVerschil)} minuten te vroeg</span>`;
+                }
+            }
+
+            resBox.innerHTML = `
+                <b>Duur Behandeling:</b> ${duurTekst}<br>
+                <b>Verschil met Afspraak:</b> ${verschilTekst}
+            `;
+        }
+
+        function slaBehandelingOp() {
+            let data = {
+                afspraak: document.getElementById('t-afspraak').value,
+                aansluit: document.getElementById('t-aansluit').value,
+                afsluit: document.getElementById('t-afsluit').value
+            };
+            localStorage.setItem('dialyse_vak1', JSON.stringify(data));
+            alert("Behandeling (Vak 1) lokaal opgeslagen!");
+        }
+
+        // Laad eventuele eerdere data bij het opstarten
+        window.onload = () => {
+            let opgeslagen = localStorage.getItem('dialyse_vak1');
+            if (opgeslagen) {
+                let d = JSON.parse(opgeslagen);
+                if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
+                if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
+                if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
+                berekenTijden();
+            }
+        };
+    </script>
+</body>
+</html>
