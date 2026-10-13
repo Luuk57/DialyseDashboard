@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Full Cloud Sync Edition</title>
+    <title>Dialyse Command Center - Multi-Nurse & Fullscreen Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -29,13 +29,14 @@
             padding: 4px 8px; border-radius: 4px; border: 1px solid #cce4f7;
         }
         .sync-input {
-            width: 260px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;
+            width: 240px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;
         }
-        .sync-btn {
+        .sync-btn, .fullscreen-btn {
             background: var(--win-blue); border: none; color: #fff;
-            padding: 4px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer;
+            padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; gap: 4px; transition: 0.2s;
         }
-        .sync-btn:hover { background: #005a9e; }
+        .sync-btn:hover, .fullscreen-btn:hover { background: #005a9e; }
 
         .dashboard-container {
             width: 100%; height: calc(100vh - 50px); padding: 20px;
@@ -76,27 +77,29 @@
 
         /* Grote Ronde Klok */
         .circular-timer-container {
-            position: relative; width: 200px; height: 200px; margin: 10px auto;
+            position: relative; width: 190px; height: 190px; margin: 10px auto;
             display: flex; align-items: center; justify-content: center;
             background: #1b1b1b; border-radius: 50%; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
         }
         .progress-ring { transform: rotate(-90deg); }
         .progress-ring-bg { stroke: #333; }
         .progress-ring-fill { stroke: #ff4d4d; transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease; stroke-linecap: round; }
-        .timer-center { position: absolute; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 150px; }
+        .timer-center { position: absolute; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 140px; }
         .countdown-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
-        .countdown-timer { font-size: 22px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        .countdown-timer { font-size: 20px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #fff; }
 
-        /* Verpleging beheer styling */
+        /* Verpleging beheer styling met Vinkjes (Checkboxes) */
         .nurse-box {
             background: #fafafa; border: 1px solid #ddd; padding: 10px; border-radius: 3px; margin-top: 10px;
         }
-        .nurse-list-container {
-            max-height: 60px; overflow-y: auto; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;
+        .nurse-checkbox-list {
+            max-height: 80px; overflow-y: auto; margin-top: 5px; display: flex; flex-direction: column; gap: 4px; padding-top: 5px; border-top: 1px solid #eee;
         }
-        .nurse-item {
-            display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 5px;
-            background: #fff; border: 1px solid #eee; margin-bottom: 3px; border-radius: 2px;
+        .nurse-item-row {
+            display: flex; justify-content: space-between; align-items: center; font-size: 12px; background: #fff; border: 1px solid #eee; padding: 4px 6px; border-radius: 3px;
+        }
+        .nurse-item-row label {
+            display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; color: #333; margin: 0;
         }
         .nurse-del-btn {
             background: #e81123; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px;
@@ -151,7 +154,8 @@
         <div class="win-title">
             <span>🪟</span> DIALYSE COMMAND CENTER <span>// DASHBOARD</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
             <div class="sync-container">
                 <span style="font-size: 11px; font-weight: 600; color: #0078d7;">☁️ Google Sheet URL:</span>
                 <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL...">
@@ -202,21 +206,18 @@
                 </div>
             </div>
 
-            <!-- VERPLEGING SELECTIE & BEHEER -->
+            <!-- MEERDERE VERPLEGING SELECTIE & BEHEER -->
             <div class="nurse-box">
-                <div class="form-group" style="margin-bottom: 5px;">
-                    <label>Verpleging Selecteren:</label>
-                    <select id="select-nurse" onchange="opslaanConceptVak1()">
-                        <option value="">-- Kies verpleegkundige --</option>
-                    </select>
-                </div>
+                <label style="font-size: 11px; font-weight: 600; color: #555;">Verpleging Selecteren (Meerdere mogelijk):</label>
                 
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <div class="nurse-checkbox-list" id="nurse-checkbox-container">
+                    <!-- Dynamische lijst van verpleegkundigen met checkboxes -->
+                </div>
+
+                <div style="display: flex; gap: 5px; margin-top: 8px;">
                     <input type="text" id="new-nurse-name" placeholder="Nieuwe naam..." style="font-size: 11px; padding: 4px;">
                     <button onclick="addNurse()" style="padding: 4px 8px; background: #3d9970; color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">Toevoegen</button>
                 </div>
-
-                <div class="nurse-list-container" id="nurse-manager-list"></div>
             </div>
 
             <button class="btn-action" onclick="slaBehandelingOpDefinitief()">BEHANDELING DEFINITIEF OPSLAAN & SYNC</button>
@@ -355,6 +356,7 @@
         const radius = 78;
         const circumference = 2 * Math.PI * radius;
         let nursesList = ["Jan", "Sophie", "Mark"];
+        let geselecteerdeNurses = [];
         let bpMetingen = [];
         
         window.addEventListener('DOMContentLoaded', () => {
@@ -378,13 +380,26 @@
             updateCountdown();
         }, 1000);
 
+        /* --- VOLLEDIG SCHERM MODUS --- */
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Fout bij inschakelen volledig scherm: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
         /* --- TIJDELIJKE OPSLAG (CONCEPTEN / AUTO-SAVE) --- */
         function opslaanConceptVak1() {
             let data = {
                 afspraak: document.getElementById('t-afspraak').value,
                 aansluit: document.getElementById('t-aansluit').value,
                 afsluit: document.getElementById('t-afsluit').value,
-                verpleging: document.getElementById('select-nurse').value
+                verpleging: verzamelGeselecteerdeNurses()
             };
             localStorage.setItem('draft_vak1', JSON.stringify(data));
         }
@@ -442,7 +457,9 @@
                 if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
                 if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
                 if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
-                if(d.verpleging) document.getElementById('select-nurse').value = d.verpleging;
+                if(d.verpleging && Array.isArray(d.verpleging)) {
+                    geselecteerdeNurses = d.verpleging;
+                }
                 berekenTijden();
             }
 
@@ -487,6 +504,56 @@
             if(d4) {
                 document.getElementById('notities-text').value = d4;
             }
+        }
+
+        /* --- VERPLEEGKUNDIGEN MET CHECKBOXES --- */
+        function renderNurses() {
+            let container = document.getElementById('nurse-checkbox-container');
+            container.innerHTML = '';
+
+            nursesList.forEach((name, index) => {
+                let row = document.createElement('div');
+                row.className = 'nurse-item-row';
+                let isChecked = geselecteerdeNurses.includes(name) ? 'checked' : '';
+
+                row.innerHTML = `
+                    <label>
+                        <input type="checkbox" class="chk-nurse-item" value="${name}" ${isChecked} onchange="opslaanConceptVak1()">
+                        <span>${name}</span>
+                    </label>
+                    <button class="nurse-del-btn" onclick="removeNurse(${index})">✕</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function verzamelGeselecteerdeNurses() {
+            let gekozen = [];
+            document.querySelectorAll('.chk-nurse-item:checked').forEach(box => {
+                gekozen.push(box.value);
+            });
+            geselecteerdeNurses = gekozen;
+            return gekozen;
+        }
+
+        function addNurse() {
+            let input = document.getElementById('new-nurse-name');
+            let name = input.value.trim();
+            if(!name) return;
+            if(!nursesList.includes(name)) {
+                nursesList.push(name);
+                renderNurses();
+                syncToGoogle('dialyse_nurses', nursesList);
+                input.value = '';
+            } else {
+                alert("Deze naam staat al in de lijst.");
+            }
+        }
+
+        function removeNurse(index) {
+            nursesList.splice(index, 1);
+            renderNurses();
+            syncToGoogle('dialyse_nurses', nursesList);
         }
 
         /* --- VAK 3: MEERDERE BLOEDDRUK & HARTSLAG LOGICA --- */
@@ -621,9 +688,13 @@
                     if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
                     if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
                     if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
-                    if(d.verpleging) document.getElementById('select-nurse').value = d.verpleging;
+                    if(d.verpleging && Array.isArray(d.verpleging)) {
+                        geselecteerdeNurses = d.verpleging;
+                        renderNurses();
+                    }
                     berekenTijden();
                 }
+
                 if (data['dialyse_vak2']) {
                     let d = JSON.parse(data['dialyse_vak2']);
                     if(d.type) document.getElementById('w-type').value = d.type;
@@ -665,46 +736,6 @@
                 console.log("Kon data niet ophalen uit Google Sheets.");
                 renderNurses();
             }
-        }
-
-        function renderNurses() {
-            let select = document.getElementById('select-nurse');
-            let managerList = document.getElementById('nurse-manager-list');
-            let currentValue = select.value;
-            select.innerHTML = '<option value="">-- Kies verpleegkundige --</option>';
-            managerList.innerHTML = '';
-
-            nursesList.forEach((name, index) => {
-                let opt = document.createElement('option');
-                opt.value = name; opt.innerText = name;
-                select.appendChild(opt);
-
-                let item = document.createElement('div');
-                item.className = 'nurse-item';
-                item.innerHTML = `<span>${name}</span> <button class="nurse-del-btn" onclick="removeNurse(${index})">✕</button>`;
-                managerList.appendChild(item);
-            });
-            if(currentValue) select.value = currentValue;
-        }
-
-        function addNurse() {
-            let input = document.getElementById('new-nurse-name');
-            let name = input.value.trim();
-            if(!name) return;
-            if(!nursesList.includes(name)) {
-                nursesList.push(name);
-                renderNurses();
-                syncToGoogle('dialyse_nurses', nursesList);
-                input.value = '';
-            } else {
-                alert("Deze naam staat al in de lijst.");
-            }
-        }
-
-        function removeNurse(index) {
-            nursesList.splice(index, 1);
-            renderNurses();
-            syncToGoogle('dialyse_nurses', nursesList);
         }
 
         function opAansluitingGewijzigd() {
@@ -831,7 +862,7 @@
                 afspraak: document.getElementById('t-afspraak').value,
                 aansluit: document.getElementById('t-aansluit').value,
                 afsluit: document.getElementById('t-afsluit').value,
-                verpleging: document.getElementById('select-nurse').value
+                verpleging: verzamelGeselecteerdeNurses()
             };
             syncToGoogle('dialyse_vak1', data);
             alert("Behandeling (Vak 1) definitief opgeslagen & gesynchroniseerd naar Google Sheets!");
