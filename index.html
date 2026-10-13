@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Styled History Edition</title>
+    <title>Dialyse Command Center - PDF Printable History Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -147,7 +147,7 @@
         .nav-btn { padding: 6px 14px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; }
         .nav-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-        /* AANSPREKENDE HISTORIE RAPPORT STYLING */
+        /* HISTORIE RAPPORT STYLING */
         .history-card-report {
             background: #fff; border: 1px solid #dcdcdc; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); padding: 20px; margin-top: 10px;
         }
@@ -168,14 +168,18 @@
         .pill-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; background: #e0e0e0; color: #333; margin-right: 3px; }
         .pill-active { background: #cce5ff; color: #004085; }
 
-        /* PRINT STYLES VOOR PDF */
+        .btn-print-history {
+            background: #28a745; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;
+        }
+        .btn-print-history:hover { background: #218838; }
+
+        /* PRINT STYLES VOOR PDF EXPORT (PLANNING & HISTORIE) */
         @media print {
             body * { visibility: hidden; }
-            #tab-planning, #tab-planning * { visibility: visible; }
-            #tab-planning { position: absolute; left: 0; top: 0; width: 100%; height: auto; padding: 0; }
-            .win-header, .tab-bar, .pdf-export-box, .btn-table-action, button { display: none !important; }
-            .plan-table { width: 100%; border: 1px solid #000; }
-            .plan-table th, .plan-table td { border: 1px solid #000; padding: 6px; }
+            .tab-content.active, .tab-content.active * { visibility: visible; }
+            .tab-content.active { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            .win-header, .tab-bar, .record-navigator, .btn-print-history, button, .pdf-export-box { display: none !important; }
+            .history-card-report { border: none; box-shadow: none; padding: 0; }
         }
     </style>
 </head>
@@ -183,7 +187,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V2.1</span>
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V2.2</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -449,7 +453,7 @@
         </div>
     </div>
 
-    <!-- TAB 3: VERBETERDE HISTORIE & ARCHIEF -->
+    <!-- TAB 3: VERBETERDE HISTORIE & ARCHIEF MET PDF/PRINT -->
     <div id="tab-historie" class="tab-content">
         <div style="max-width: 950px; margin: 0 auto;">
             <div class="record-navigator">
@@ -732,6 +736,10 @@
             window.print();
         }
 
+        function printHistorieRapport() {
+            window.print();
+        }
+
         /* --- 1 SINGLE SAVE FUNCTIE --- */
         function slaSessieDefinitiefOpOpEenRegel() {
             let v1 = localStorage.getItem('draft_vak1') ? JSON.parse(localStorage.getItem('draft_vak1')) : {};
@@ -841,8 +849,13 @@
             view.innerHTML = `
                 <div class="history-card-report">
                     <div class="history-header-bar">
-                        <div class="history-title-date">📅 Dialyserapport van ${new Date(rec.datum).toLocaleString()}</div>
-                        <div class="history-badge-status">✓ VOLTOOID (>= 4 UUR)</div>
+                        <div>
+                            <div class="history-title-date">📅 Dialyserapport van ${new Date(rec.datum).toLocaleString()}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <button class="btn-print-history" onclick="printHistorieRapport()">🖨️ Afdrukken / Opslaan als PDF</button>
+                            <div class="history-badge-status">✓ VOLTOOID (>= 4 UUR)</div>
+                        </div>
                     </div>
 
                     <div class="history-grid">
