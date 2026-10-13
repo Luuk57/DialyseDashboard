@@ -40,58 +40,35 @@
             text-transform: uppercase; letter-spacing: 0.5px;
         }
 
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 4px; }
-        .form-group input {
-            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 3px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
         }
-        .form-group input:focus { background: #fff; border-color: var(--win-blue); outline: none; }
+        .form-group input:focus, .form-group select:focus { background: #fff; border-color: var(--win-blue); outline: none; }
 
         .calc-box {
             background: #eef6fc; border-left: 4px solid var(--win-blue);
-            padding: 10px; margin-top: 10px; font-size: 12px; line-height: 1.5;
+            padding: 8px; margin-top: 8px; font-size: 11px; line-height: 1.4;
         }
         .calc-box b { color: #000; }
 
-        /* Ronde Klok / Cirkel Container */
+        /* Ronde Klok */
         .circular-timer-container {
-            position: relative;
-            width: 150px;
-            height: 150px;
-            margin: 15px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #1b1b1b;
-            border-radius: 50%;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+            position: relative; width: 120px; height: 120px; margin: 10px auto;
+            display: flex; align-items: center; justify-content: center;
+            background: #1b1b1b; border-radius: 50%; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
         }
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-        .progress-ring-bg {
-            stroke: #333;
-        }
-        .progress-ring-fill {
-            stroke: #ff4d4d;
-            transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease;
-            stroke-linecap: round;
-        }
-        .timer-center {
-            position: absolute;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 110px;
-        }
-        .countdown-label { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
-        .countdown-timer { font-size: 16px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring-bg { stroke: #333; }
+        .progress-ring-fill { stroke: #ff4d4d; transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease; stroke-linecap: round; }
+        .timer-center { position: absolute; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 90px; }
+        .countdown-label { font-size: 8px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .countdown-timer { font-size: 14px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #fff; }
 
         .btn-action {
-            margin-top: 10px; padding: 10px; background: var(--win-blue); color: #fff;
-            border: none; border-radius: 3px; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s;
+            margin-top: 10px; padding: 8px; background: var(--win-blue); color: #fff;
+            border: none; border-radius: 3px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.2s;
         }
         .btn-action:hover { background: #005a9e; }
     </style>
@@ -100,7 +77,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1: BEHANDELING</span>
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1 & VAK 2</span>
         </div>
         <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
     </div>
@@ -122,7 +99,7 @@
             </div>
 
             <div class="form-group">
-                <label>Afsluit Tijd (Standaard 05:30 v.d. dag erna, handmatig aanpasbaar):</label>
+                <label>Afsluit Tijd (Standaard 05:30 d.d. erna, aanpasbaar):</label>
                 <input type="datetime-local" id="t-afsluit" oninput="berekenTijden()">
             </div>
 
@@ -131,11 +108,10 @@
                 <b>Verschil met Afspraak:</b> nog niet berekend
             </div>
 
-            <!-- RONDE VOORTGANGSKLOK -->
             <div class="circular-timer-container">
-                <svg class="progress-ring" width="140" height="140">
-                    <circle class="progress-ring-bg" stroke-width="10" fill="transparent" r="60" cx="70" cy="70"/>
-                    <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="10" fill="transparent" r="60" cx="70" cy="70"/>
+                <svg class="progress-ring" width="110" height="110">
+                    <circle class="progress-ring-bg" stroke-width="8" fill="transparent" r="48" cx="55" cy="55"/>
+                    <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="8" fill="transparent" r="48" cx="55" cy="55"/>
                 </svg>
                 <div class="timer-center">
                     <div class="countdown-label">Resterend</div>
@@ -146,24 +122,56 @@
             <button class="btn-action" onclick="slaBehandelingOp()">BEHANDELING OPSLAAN</button>
         </div>
 
-        <div class="dashboard-card">
-            <div class="card-header">Vak 2: Vocht / UF & Gewicht</div>
-            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+        <!-- VAK 2: GEWICHT & UF -->
+        <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
+            <div class="card-header">Vak 2: Gewicht & UF</div>
+            
+            <div class="form-group">
+                <label>Type Behandeling:</label>
+                <select id="w-type" onchange="berekenGewichtEnUF()">
+                    <option value="nacht">Nachtdialyse (Constante 0,3)</option>
+                    <option value="dag">Dagdialyse (Constante 0,6)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Droog Gewicht (kg):</label>
+                <input type="number" step="0.1" id="w-droog" value="109" oninput="berekenGewichtEnUF()">
+            </div>
+
+            <div class="form-group">
+                <label>Pre-Gewicht (kg):</label>
+                <input type="number" step="0.1" id="w-pre" placeholder="bijv. 112.5" oninput="berekenGewichtEnUF()">
+            </div>
+
+            <div class="form-group">
+                <label>Post-Gewicht (kg):</label>
+                <input type="number" step="0.1" id="w-post" placeholder="bijv. 109.2" oninput="berekenGewichtEnUF()">
+            </div>
+
+            <div class="form-group">
+                <label>Gebruikt UF (Machine - Liter):</label>
+                <input type="number" step="0.1" id="w-gebruikt-uf" placeholder="bijv. 3.5">
+            </div>
+
+            <div class="calc-box" id="resultaten-gewicht">
+                <b>UF-Advies:</b> -- kg<br>
+                <b>Werkelijke UF (Pre - Post):</b> -- kg
+            </div>
+
+            <button class="btn-action" onclick="slaGewichtOp()">GEWICHT & UF OPSLAAN</button>
         </div>
 
+        <!-- VAK 3: (Toekomstig) -->
         <div class="dashboard-card">
             <div class="card-header">Vak 3: Bloeddruk & Hartslag</div>
-            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+            <p style="font-size: 11px; color: #777;">Wordt hierna ingericht...</p>
         </div>
 
+        <!-- VAK 4: (Toekomstig) -->
         <div class="dashboard-card">
             <div class="card-header">Vak 4: Medicatie & Notities</div>
-            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
-        </div>
-
-        <div class="dashboard-card">
-            <div class="card-header">Vak 5: Overzicht / Google Sync</div>
-            <p style="font-size: 12px; color: #777;">Wordt hierna ingericht...</p>
+            <p style="font-size: 11px; color: #777;">Wordt hierna ingericht...</p>
         </div>
 
     </div>
@@ -172,14 +180,14 @@
         let actieveStartTijd = null;
         let actieveEindTijd = null;
         
-        // SVG Cirkel instellingen
-        const radius = 60;
+        const radius = 48;
         const circumference = 2 * Math.PI * radius;
         
         window.addEventListener('DOMContentLoaded', () => {
             const ring = document.getElementById('progress-ring-circle');
             ring.style.strokeDasharray = `${circumference} ${circumference}`;
             ring.style.strokeDashoffset = circumference;
+            laadData();
         });
 
         setInterval(() => {
@@ -194,7 +202,6 @@
                 let afsluitDate = new Date(aansluitDate);
                 afsluitDate.setDate(afsluitDate.getDate() + 1);
                 afsluitDate.setHours(5, 30, 0, 0);
-
                 document.getElementById('t-afsluit').value = formatDateTimeLocal(afsluitDate);
             }
             berekenTijden();
@@ -229,33 +236,44 @@
                     let minuten = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                     duurTekst = `${uren} uur en ${minuten} minuten`;
                 } else {
-                    duurTekst = "<span style='color:red;'>Afsluiting moet na aansluiting zijn!</span>";
-                    actieveEindTijd = null;
-                    actieveStartTijd = null;
+                    actieveEindTijd = null; actieveStartTijd = null;
                 }
             } else {
-                actieveEindTijd = null;
-                actieveStartTijd = null;
+                actieveEindTijd = null; actieveStartTijd = null;
             }
 
             if (afspraakVal && aansluitVal) {
                 let afspraak = new Date(afspraakVal);
                 let aansluit = new Date(aansluitVal);
                 let diffAfspraakMs = aansluit - afspraak;
-                
                 let minVerschil = Math.round(diffAfspraakMs / (1000 * 60));
-                if (minVerschil === 0) {
-                    verschilTekst = "Exact op tijd! (0 min)";
-                } else if (minVerschil > 0) {
-                    verschilTekst = `<span style='color:orange;'>${minVerschil} minuten te laat</span>`;
-                } else {
-                    verschilTekst = `<span style='color:green;'>${Math.abs(minVerschil)} minuten te vroeg</span>`;
-                }
+                
+                if (minVerschil === 0) verschilTekst = "Op tijd! (0 min)";
+                else if (minVerschil > 0) verschilTekst = `<span style='color:orange;'>${minVerschil} min te laat</span>`;
+                else verschilTekst = `<span style='color:green;'>${Math.abs(minVerschil)} min te vroeg</span>`;
             }
 
+            resBox.innerHTML = `<b>Duur:</b> ${duurTekst}<br><b>Verschil:</b> ${verschilTekst}`;
+        }
+
+        function berekenGewichtEnUF() {
+            let type = document.getElementById('w-type').value;
+            let droog = parseFloat(document.getElementById('w-droog').value) || 0;
+            let pre = parseFloat(document.getElementById('w-pre').value) || 0;
+            let post = parseFloat(document.getElementById('w-post').value) || 0;
+            let resBox = document.getElementById('resultaten-gewicht');
+
+            let constante = (type === 'nacht') ? 0.3 : 0.6;
+            
+            // UF Advies = Pre - Droog + constante
+            let ufAdvies = (pre > 0 && droog > 0) ? (pre - droog + constante).toFixed(2) : "--";
+            
+            // Werkelijke UF = Pre - Post
+            let werkelijkUf = (pre > 0 && post > 0) ? (pre - post).toFixed(2) : "--";
+
             resBox.innerHTML = `
-                <b>Duur Behandeling:</b> ${duurTekst}<br>
-                <b>Verschil met Afspraak:</b> ${verschilTekst}
+                <b>UF-Advies (${type === 'nacht' ? '0,3' : '0,6'}):</b> ${ufAdvies} kg<br>
+                <b>Werkelijke UF (Pre - Post):</b> ${werkelijkUf} kg
             `;
         }
 
@@ -276,24 +294,17 @@
 
             if (restris <= 0) {
                 timerDisplay.innerText = "KLAAR";
-                if(ring) {
-                    ring.style.strokeDashoffset = 0;
-                    ring.style.stroke = "#00ff66";
-                }
+                if(ring) { ring.style.strokeDashoffset = 0; ring.style.stroke = "#00ff66"; }
                 return;
             }
 
-            // Bereken voortgang percentage (0.0 tot 1.0)
             let voortgang = verstreken / totaalDuur;
             if (voortgang < 0) voortgang = 0;
             if (voortgang > 1) voortgang = 1;
 
-            // Update SVG ring offset
             let offset = circumference - (voortgang * circumference);
             ring.style.strokeDashoffset = offset;
 
-            // Kleurovergang van Rood naar Groen naarmate de tijd vordert
-            // Rood: rgb(255, 77, 77) -> Groen: rgb(0, 255, 102)
             let r = Math.round(255 * (1 - voortgang) + 0 * voortgang);
             let g = Math.round(77 * (1 - voortgang) + 255 * voortgang);
             let b = Math.round(77 * (1 - voortgang) + 102 * voortgang);
@@ -303,10 +314,7 @@
             let minuten = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60));
             let seconden = Math.floor((restris % (1000 * 60)) / 1000);
 
-            timerDisplay.innerText = 
-                String(uren).padStart(2, '0') + ":" + 
-                String(minuten).padStart(2, '0') + ":" + 
-                String(seconden).padStart(2, '0');
+            timerDisplay.innerText = String(uren).padStart(2, '0') + ":" + String(minuten).padStart(2, '0') + ":" + String(seconden).padStart(2, '0');
         }
 
         function slaBehandelingOp() {
@@ -316,19 +324,45 @@
                 afsluit: document.getElementById('t-afsluit').value
             };
             localStorage.setItem('dialyse_vak1', JSON.stringify(data));
-            alert("Behandeling (Vak 1) succesvol opgeslagen!");
+            alert("Vak 1 (Behandeling) opgeslagen!");
         }
 
-        window.onload = () => {
-            let opgeslagen = localStorage.getItem('dialyse_vak1');
-            if (opgeslagen) {
-                let d = JSON.parse(opgeslagen);
+        function slaGewichtOp() {
+            let data = {
+                type: document.getElementById('w-type').value,
+                droog: document.getElementById('w-droog').value,
+                pre: document.getElementById('w-pre').value,
+                post: document.getElementById('w-post').value,
+                gebruiktUf: document.getElementById('w-gebruikt-uf').value
+            };
+            localStorage.setItem('dialyse_vak2', JSON.stringify(data));
+            alert("Vak 2 (Gewicht & UF) opgeslagen!");
+        }
+
+        function laadData() {
+            let op1 = localStorage.getItem('dialyse_vak1');
+            if (op1) {
+                let d = JSON.parse(op1);
                 if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
                 if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
                 if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
                 berekenTijden();
             }
-        };
+
+            let op2 = localStorage.getItem('dialyse_vak2');
+            if (op2) {
+                let d = JSON.parse(op2);
+                if(d.type) document.getElementById('w-type').value = d.type;
+                if(d.droog) document.getElementById('w-droog').value = d.droog;
+                if(d.pre) document.getElementById('w-pre').value = d.pre;
+                if(d.post) document.getElementById('w-post').value = d.post;
+                if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
+                berekenGewichtEnUF();
+            } else {
+                // Standaard droog gewicht geheugen vullen
+                berekenGewichtEnUF();
+            }
+        }
     </script>
 </body>
 </html>
