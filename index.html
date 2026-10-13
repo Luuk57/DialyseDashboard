@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Direct Sync Edition</title>
+    <title>Dialyse Command Center - Config Sheet Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -109,7 +109,6 @@
             <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1 & VAK 2</span>
         </div>
         <div style="display: flex; align-items: center; gap: 15px;">
-            <!-- DIRECT ZICHTBARE SYNC INVOER -->
             <div class="sync-container">
                 <span style="font-size: 11px; font-weight: 600; color: #0078d7;">☁️ Google Sheet URL:</span>
                 <input type="text" id="sheets-url-input" class="sync-input" placeholder="Plak hier je Apps Script URL...">
@@ -237,19 +236,20 @@
         
         const radius = 88;
         const circumference = 2 * Math.PI * radius;
-        let nursesList = JSON.parse(localStorage.getItem('dialyse_nurses')) || ["Jan", "Sophie", "Mark"];
+        let nursesList = ["Jan", "Sophie", "Mark"];
         
         window.addEventListener('DOMContentLoaded', () => {
             const ring = document.getElementById('progress-ring-circle');
             ring.style.strokeDasharray = `${circumference} ${circumference}`;
             ring.style.strokeDashoffset = circumference;
             
-            // Laad eventuele opgeslagen URL direct in het invoerveld
             document.getElementById('sheets-url-input').value = googleSheetsUrl;
 
-            renderNurses();
-            laadLokaleData();
-            if(googleSheetsUrl) syncFromGoogle();
+            if(googleSheetsUrl) {
+                syncFromGoogle();
+            } else {
+                renderNurses();
+            }
         });
 
         setInterval(() => {
@@ -285,6 +285,11 @@
                 let res = await fetch(googleSheetsUrl);
                 let data = await res.json();
                 
+                if (data['dialyse_nurses']) {
+                    nursesList = JSON.parse(data['dialyse_nurses']);
+                }
+                renderNurses();
+
                 if (data['dialyse_vak1']) {
                     let d = JSON.parse(data['dialyse_vak1']);
                     if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
@@ -301,9 +306,12 @@
                     if(d.post) document.getElementById('w-post').value = d.post;
                     if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
                     berekenGewichtEnUF();
+                } else {
+                    berekenGewichtEnUF();
                 }
             } catch(e) {
                 console.log("Kon data niet ophalen uit Google Sheets.");
+                renderNurses();
             }
         }
 
@@ -333,8 +341,8 @@
             if(!name) return;
             if(!nursesList.includes(name)) {
                 nursesList.push(name);
-                localStorage.setItem('dialyse_nurses', JSON.stringify(nursesList));
                 renderNurses();
+                syncToGoogle('dialyse_nurses', nursesList);
                 input.value = '';
             } else {
                 alert("Deze naam staat al in de lijst.");
@@ -343,8 +351,8 @@
 
         function removeNurse(index) {
             nursesList.splice(index, 1);
-            localStorage.setItem('dialyse_nurses', JSON.stringify(nursesList));
             renderNurses();
+            syncToGoogle('dialyse_nurses', nursesList);
         }
 
         function opAansluitingGewijzigd() {
@@ -472,9 +480,8 @@
                 afsluit: document.getElementById('t-afsluit').value,
                 verpleging: document.getElementById('select-nurse').value
             };
-            localStorage.setItem('dialyse_vak1', JSON.stringify(data));
             syncToGoogle('dialyse_vak1', data);
-            alert("Behandeling opgeslagen & gesynchroniseerd!");
+            alert("Behandeling opgeslagen & gesynchroniseerd naar Google Sheets!");
         }
 
         function slaGewichtOp() {
@@ -485,34 +492,8 @@
                 post: document.getElementById('w-post').value,
                 gebruiktUf: document.getElementById('w-gebruikt-uf').value
             };
-            localStorage.setItem('dialyse_vak2', JSON.stringify(data));
             syncToGoogle('dialyse_vak2', data);
-            alert("Gewicht & UF opgeslagen & gesynchroniseerd!");
-        }
-
-        function laadLokaleData() {
-            let op1 = localStorage.getItem('dialyse_vak1');
-            if (op1) {
-                let d = JSON.parse(op1);
-                if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
-                if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
-                if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
-                if(d.verpleging) document.getElementById('select-nurse').value = d.verpleging;
-                berekenTijden();
-            }
-
-            let op2 = localStorage.getItem('dialyse_vak2');
-            if (op2) {
-                let d = JSON.parse(op2);
-                if(d.type) document.getElementById('w-type').value = d.type;
-                if(d.droog) document.getElementById('w-droog').value = d.droog;
-                if(d.pre) document.getElementById('w-pre').value = d.pre;
-                if(d.post) document.getElementById('w-post').value = d.post;
-                if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
-                berekenGewichtEnUF();
-            } else {
-                berekenGewichtEnUF();
-            }
+            alert("Gewicht & UF opgeslagen & gesynchroniseerd naar Google Sheets!");
         }
     </script>
 </body>
