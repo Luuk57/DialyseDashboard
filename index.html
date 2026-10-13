@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Behandelingssysteem - Windows Edition</title>
+    <title>Dialyse Command Center - Google Sync Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -21,8 +21,14 @@
             height: 50px; background: var(--card-bg); border-bottom: 1px solid var(--border-color);
             display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
         }
-        .win-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .win-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
         .win-title span { color: var(--win-blue); }
+        
+        .sync-btn {
+            background: #eef6fc; border: 1px solid var(--win-blue); color: var(--win-blue);
+            padding: 5px 12px; border-radius: 3px; font-size: 12px; font-weight: 600; cursor: pointer;
+        }
+        .sync-btn:hover { background: var(--win-blue); color: #fff; }
 
         .dashboard-container {
             width: 100%; height: calc(100vh - 50px); padding: 20px;
@@ -71,7 +77,7 @@
             background: #fafafa; border: 1px solid #ddd; padding: 10px; border-radius: 3px; margin-top: 10px;
         }
         .nurse-list-container {
-            max-height: 80px; overflow-y: auto; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;
+            max-height: 70px; overflow-y: auto; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px;
         }
         .nurse-item {
             display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 3px 5px;
@@ -95,7 +101,10 @@
         <div class="win-title">
             <span>🪟</span> DIALYSE COMMAND CENTER <span>// VAK 1 & VAK 2</span>
         </div>
-        <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="sync-btn" onclick="openSyncSettings()">☁️ Google Sync Instellingen</button>
+            <div id="system-clock" style="font-size: 13px; font-weight: 500; color: #666;"></div>
+        </div>
     </div>
 
     <div class="dashboard-container">
@@ -150,12 +159,10 @@
                     <button onclick="addNurse()" style="padding: 4px 8px; background: #3d9970; color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">Toevoegen</button>
                 </div>
 
-                <div class="nurse-list-container" id="nurse-manager-list">
-                    <!-- Dynamische lijst van verpleegkundigen met verwijderknoppen -->
-                </div>
+                <div class="nurse-list-container" id="nurse-manager-list"></div>
             </div>
 
-            <button class="btn-action" onclick="slaBehandelingOp()">BEHANDELING OPSLAAN</button>
+            <button class="btn-action" onclick="slaBehandelingOp()">BEHANDELING OPSLAAN & SYNC</button>
         </div>
 
         <!-- VAK 2: GEWICHT & UF -->
@@ -195,16 +202,15 @@
                 <b>Werkelijke UF (Pre - Post):</b> -- kg
             </div>
 
-            <button class="btn-action" onclick="slaGewichtOp()">GEWICHT & UF OPSLAAN</button>
+            <button class="btn-action" onclick="slaGewichtOp()">GEWICHT & UF OPSLAAN & SYNC</button>
         </div>
 
-        <!-- VAK 3: (Toekomstig) -->
+        <!-- VAK 3 & 4 -->
         <div class="dashboard-card">
             <div class="card-header">Vak 3: Bloeddruk & Hartslag</div>
             <p style="font-size: 11px; color: #777;">Wordt hierna ingericht...</p>
         </div>
 
-        <!-- VAK 4: (Toekomstig) -->
         <div class="dashboard-card">
             <div class="card-header">Vak 4: Medicatie & Notities</div>
             <p style="font-size: 11px; color: #777;">Wordt hierna ingericht...</p>
@@ -215,11 +221,10 @@
     <script>
         let actieveStartTijd = null;
         let actieveEindTijd = null;
+        let googleSheetsUrl = localStorage.getItem('google_sheets_url') || '';
         
         const radius = 88;
         const circumference = 2 * Math.PI * radius;
-        
-        // Standaard verpleging lijst indien leeg
         let nursesList = JSON.parse(localStorage.getItem('dialyse_nurses')) || ["Jan", "Sophie", "Mark"];
         
         window.addEventListener('DOMContentLoaded', () => {
@@ -227,7 +232,8 @@
             ring.style.strokeDasharray = `${circumference} ${circumference}`;
             ring.style.strokeDashoffset = circumference;
             renderNurses();
-            laadData();
+            laadLokaleData();
+            if(googleSheetsUrl) syncFromGoogle();
         });
 
         setInterval(() => {
@@ -235,28 +241,75 @@
             updateCountdown();
         }, 1000);
 
+        function openSyncSettings() {
+            let url = prompt("Plak hier je Google Sheets Web App URL:", googleSheetsUrl);
+            if (url !== null) {
+                googleSheetsUrl = url.trim();
+                localStorage.setItem('google_sheets_url', googleSheetsUrl);
+                alert("Google Sync URL opgeslagen!");
+                syncFromGoogle();
+            }
+        }
+
+        async function syncToGoogle(key, valueObj) {
+            if (!googleSheetsUrl) return;
+            try {
+                await fetch(googleSheetsUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) })
+                });
+            } catch(e) {
+                console.error("Fout bij synchroniseren naar Google:", e);
+            }
+        }
+
+        async function syncFromGoogle() {
+            if (!googleSheetsUrl) return;
+            try {
+                let res = await fetch(googleSheetsUrl);
+                let data = await res.json();
+                
+                if (data['dialyse_vak1']) {
+                    let d = JSON.parse(data['dialyse_vak1']);
+                    if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
+                    if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
+                    if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
+                    if(d.verpleging) document.getElementById('select-nurse').value = d.verpleging;
+                    berekenTijden();
+                }
+                if (data['dialyse_vak2']) {
+                    let d = JSON.parse(data['dialyse_vak2']);
+                    if(d.type) document.getElementById('w-type').value = d.type;
+                    if(d.droog) document.getElementById('w-droog').value = d.droog;
+                    if(d.pre) document.getElementById('w-pre').value = d.pre;
+                    if(d.post) document.getElementById('w-post').value = d.post;
+                    if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
+                    berekenGewichtEnUF();
+                }
+            } catch(e) {
+                console.log("Kon data niet ophalen uit Google Sheets (mogelijk CORS of lege sheet).");
+            }
+        }
+
         function renderNurses() {
             let select = document.getElementById('select-nurse');
             let managerList = document.getElementById('nurse-manager-list');
-            
             let currentValue = select.value;
             select.innerHTML = '<option value="">-- Kies verpleegkundige --</option>';
             managerList.innerHTML = '';
 
             nursesList.forEach((name, index) => {
-                // Dropdown vullen
                 let opt = document.createElement('option');
-                opt.value = name;
-                opt.innerText = name;
+                opt.value = name; opt.innerText = name;
                 select.appendChild(opt);
 
-                // Beheerlijstje vullen met verwijderknop
                 let item = document.createElement('div');
                 item.className = 'nurse-item';
                 item.innerHTML = `<span>${name}</span> <button class="nurse-del-btn" onclick="removeNurse(${index})">✕</button>`;
                 managerList.appendChild(item);
             });
-
             if(currentValue) select.value = currentValue;
         }
 
@@ -264,7 +317,6 @@
             let input = document.getElementById('new-nurse-name');
             let name = input.value.trim();
             if(!name) return;
-
             if(!nursesList.includes(name)) {
                 nursesList.push(name);
                 localStorage.setItem('dialyse_nurses', JSON.stringify(nursesList));
@@ -407,7 +459,8 @@
                 verpleging: document.getElementById('select-nurse').value
             };
             localStorage.setItem('dialyse_vak1', JSON.stringify(data));
-            alert("Vak 1 (Behandeling & Verpleging) opgeslagen!");
+            syncToGoogle('dialyse_vak1', data);
+            alert("Behandeling opgeslagen & gesynchroniseerd met Google Sheets!");
         }
 
         function slaGewichtOp() {
@@ -419,10 +472,11 @@
                 gebruiktUf: document.getElementById('w-gebruikt-uf').value
             };
             localStorage.setItem('dialyse_vak2', JSON.stringify(data));
-            alert("Vak 2 (Gewicht & UF) opgeslagen!");
+            syncToGoogle('dialyse_vak2', data);
+            alert("Gewicht & UF opgeslagen & gesynchroniseerd met Google Sheets!");
         }
 
-        function laadData() {
+        function laadLokaleData() {
             let op1 = localStorage.getItem('dialyse_vak1');
             if (op1) {
                 let d = JSON.parse(op1);
