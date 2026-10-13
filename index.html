@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Config Sheet Edition</title>
+    <title>Dialyse Command Center - Full Cloud Sync Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -55,7 +55,10 @@
 
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 3px; }
-        .form-group input, .form-group select {
+        .form-group input[type="number"], 
+        .form-group input[type="text"], 
+        .form-group input[type="datetime-local"], 
+        .form-group select {
             width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
         }
         .form-group input:focus, .form-group select:focus { background: #fff; border-color: var(--win-blue); outline: none; }
@@ -93,6 +96,29 @@
         .nurse-del-btn {
             background: #e81123; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px;
             font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Toediening sectie */
+        .toediening-box {
+            border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 12px;
+        }
+        .toediening-title {
+            font-size: 12px; font-weight: 700; color: var(--win-blue); margin-bottom: 10px; text-transform: uppercase;
+        }
+        .checkbox-group {
+            display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; margin-bottom: 8px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 16px; height: 16px; cursor: pointer;
+        }
+        .multi-check-row {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px;
+        }
+        .multi-check-label {
+            width: 100px; font-weight: 600; color: #333;
+        }
+        .multi-checks {
+            display: flex; gap: 8px;
         }
 
         .btn-action {
@@ -176,9 +202,9 @@
             <button class="btn-action" onclick="slaBehandelingOp()">BEHANDELING OPSLAAN & SYNC</button>
         </div>
 
-        <!-- VAK 2: GEWICHT & UF -->
+        <!-- VAK 2: GEWICHT & UF & TOEDIENING -->
         <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
-            <div class="card-header">Vak 2: Gewicht & UF</div>
+            <div class="card-header">Vak 2: Gewicht, UF & Toediening</div>
             
             <div class="form-group">
                 <label>Type Behandeling:</label>
@@ -213,7 +239,53 @@
                 <b>Werkelijke UF (Pre - Post):</b> -- kg
             </div>
 
-            <button class="btn-action" onclick="slaGewichtOp()">GEWICHT & UF OPSLAAN & SYNC</button>
+            <!-- TOEDIENING SECTIE -->
+            <div class="toediening-box">
+                <div class="toediening-title">💉 Toediening & Metingen</div>
+                
+                <div style="display: flex; gap: 20px; margin-bottom: 8px;">
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-epo"> Epo
+                    </label>
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-ijzer"> IJzer
+                    </label>
+                </div>
+
+                <!-- Fragmin 2500 (4 vakjes) -->
+                <div class="multi-check-row">
+                    <span class="multi-check-label">Fragmin 2500:</span>
+                    <div class="multi-checks">
+                        <input type="checkbox" class="chk-f2500" style="width:16px; height:16px;">
+                        <input type="checkbox" class="chk-f2500" style="width:16px; height:16px;">
+                        <input type="checkbox" class="chk-f2500" style="width:16px; height:16px;">
+                        <input type="checkbox" class="chk-f2500" style="width:16px; height:16px;">
+                    </div>
+                </div>
+
+                <!-- Fragmin 5000 (4 vakjes) -->
+                <div class="multi-check-row">
+                    <span class="multi-check-label">Fragmin 5000:</span>
+                    <div class="multi-checks">
+                        <input type="checkbox" class="chk-f5000" style="width:16px; height:16px;">
+                        <input type="checkbox" class="chk-f5000" style="width:16px; height:16px;">
+                        <input type="checkbox" class="chk-f5000" style="width:16px; height:16px;">
+                        <input type="checkbox" class="chk-f5000" style="width:16px; height:16px;">
+                    </div>
+                </div>
+
+                <!-- Shuntflow met 4 digits -->
+                <div style="margin-top: 10px;">
+                    <label class="checkbox-group">
+                        <input type="checkbox" id="chk-shuntflow" onchange="toggleShuntflowInput()"> Shuntflow
+                    </label>
+                    <div id="shuntflow-field" style="display: none; margin-top: 5px;">
+                        <input type="number" id="input-shuntflow" placeholder="bijv. 1200" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);" style="font-size: 13px; font-weight: bold; padding: 6px;">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-action" onclick="slaGewichtOp()">GEWICHT, UF & TOEDIENING OPSLAAN</button>
         </div>
 
         <!-- VAK 3 & 4 -->
@@ -256,6 +328,11 @@
             document.getElementById('system-clock').innerText = new Date().toLocaleString();
             updateCountdown();
         }, 1000);
+
+        function toggleShuntflowInput() {
+            let chk = document.getElementById('chk-shuntflow').checked;
+            document.getElementById('shuntflow-field').style.display = chk ? 'block' : 'none';
+        }
 
         function bewaarSyncUrl() {
             let val = document.getElementById('sheets-url-input').value.trim();
@@ -305,6 +382,27 @@
                     if(d.pre) document.getElementById('w-pre').value = d.pre;
                     if(d.post) document.getElementById('w-post').value = d.post;
                     if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
+                    
+                    // Inladen van Epo, IJzer, Fragmin & Shuntflow
+                    if(d.epo !== undefined) document.getElementById('chk-epo').checked = d.epo;
+                    if(d.ijzer !== undefined) document.getElementById('chk-ijzer').checked = d.ijzer;
+
+                    if(d.fragmin2500) {
+                        let boxes = document.querySelectorAll('.chk-f2500');
+                        d.fragmin2500.forEach((val, i) => { if(boxes[i]) boxes[i].checked = val; });
+                    }
+
+                    if(d.fragmin5000) {
+                        let boxes = document.querySelectorAll('.chk-f5000');
+                        d.fragmin5000.forEach((val, i) => { if(boxes[i]) boxes[i].checked = val; });
+                    }
+
+                    if(d.shuntflowActive !== undefined) {
+                        document.getElementById('chk-shuntflow').checked = d.shuntflowActive;
+                        toggleShuntflowInput();
+                    }
+                    if(d.shuntflowValue) document.getElementById('input-shuntflow').value = d.shuntflowValue;
+
                     berekenGewichtEnUF();
                 } else {
                     berekenGewichtEnUF();
@@ -485,15 +583,27 @@
         }
 
         function slaGewichtOp() {
+            let f2500Val = [];
+            document.querySelectorAll('.chk-f2500').forEach(box => f2500Val.push(box.checked));
+
+            let f5000Val = [];
+            document.querySelectorAll('.chk-f5000').forEach(box => f5000Val.push(box.checked));
+
             let data = {
                 type: document.getElementById('w-type').value,
                 droog: document.getElementById('w-droog').value,
                 pre: document.getElementById('w-pre').value,
                 post: document.getElementById('w-post').value,
-                gebruiktUf: document.getElementById('w-gebruikt-uf').value
+                gebruiktUf: document.getElementById('w-gebruikt-uf').value,
+                epo: document.getElementById('chk-epo').checked,
+                ijzer: document.getElementById('chk-ijzer').checked,
+                fragmin2500: f2500Val,
+                fragmin5000: f5000Val,
+                shuntflowActive: document.getElementById('chk-shuntflow').checked,
+                shuntflowValue: document.getElementById('input-shuntflow').value
             };
             syncToGoogle('dialyse_vak2', data);
-            alert("Gewicht & UF opgeslagen & gesynchroniseerd naar Google Sheets!");
+            alert("Gewicht, UF & Toediening opgeslagen & gesynchroniseerd!");
         }
     </script>
 </body>
