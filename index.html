@@ -53,13 +53,41 @@
         }
         .calc-box b { color: #000; }
 
-        /* Countdown klok stijl */
-        .countdown-box {
-            background: #1b1b1b; color: #00ff66; border-radius: 4px; padding: 12px;
-            text-align: center; margin-top: 10px; border: 1px solid #333;
+        /* Ronde Klok / Cirkel Container */
+        .circular-timer-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1b1b1b;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
         }
-        .countdown-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
-        .countdown-timer { font-size: 20px; font-weight: bold; font-family: 'Courier New', Courier, monospace; }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-bg {
+            stroke: #333;
+        }
+        .progress-ring-fill {
+            stroke: #ff4d4d;
+            transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease;
+            stroke-linecap: round;
+        }
+        .timer-center {
+            position: absolute;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 110px;
+        }
+        .countdown-label { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .countdown-timer { font-size: 16px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #fff; }
 
         .btn-action {
             margin-top: 10px; padding: 10px; background: var(--win-blue); color: #fff;
@@ -103,10 +131,16 @@
                 <b>Verschil met Afspraak:</b> nog niet berekend
             </div>
 
-            <!-- LIVE COUNTDOWN KLOK -->
-            <div class="countdown-box">
-                <div class="countdown-label">Resterende Tijd Behandeling</div>
-                <div class="countdown-timer" id="countdown-display">--:--:--</div>
+            <!-- RONDE VOORTGANGSKLOK -->
+            <div class="circular-timer-container">
+                <svg class="progress-ring" width="140" height="140">
+                    <circle class="progress-ring-bg" stroke-width="10" fill="transparent" r="60" cx="70" cy="70"/>
+                    <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="10" fill="transparent" r="60" cx="70" cy="70"/>
+                </svg>
+                <div class="timer-center">
+                    <div class="countdown-label">Resterend</div>
+                    <div class="countdown-timer" id="countdown-display">--:--:--</div>
+                </div>
             </div>
 
             <button class="btn-action" onclick="slaBehandelingOp()">BEHANDELING OPSLAAN</button>
@@ -135,14 +169,24 @@
     </div>
 
     <script>
+        let actieveStartTijd = null;
         let actieveEindTijd = null;
+        
+        // SVG Cirkel instellingen
+        const radius = 60;
+        const circumference = 2 * Math.PI * radius;
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const ring = document.getElementById('progress-ring-circle');
+            ring.style.strokeDasharray = `${circumference} ${circumference}`;
+            ring.style.strokeDashoffset = circumference;
+        });
 
         setInterval(() => {
             document.getElementById('system-clock').innerText = new Date().toLocaleString();
             updateCountdown();
         }, 1000);
 
-        // Wordt alleen aangeroepen als de gebruiker een nieuwe aansluittijd kiest
         function opAansluitingGewijzigd() {
             let aansluitVal = document.getElementById('t-aansluit').value;
             if (aansluitVal) {
@@ -151,7 +195,6 @@
                 afsluitDate.setDate(afsluitDate.getDate() + 1);
                 afsluitDate.setHours(5, 30, 0, 0);
 
-                // Zet netjes in de datetime-local input zodat het handmatig aanpasbaar is
                 document.getElementById('t-afsluit').value = formatDateTimeLocal(afsluitDate);
             }
             berekenTijden();
@@ -176,11 +219,11 @@
             let verschilTekst = "Niet volledig ingevuld";
 
             if (aansluitVal && afsluitVal) {
-                let aansluitDate = new Date(aansluitVal);
+                actieveStartTijd = new Date(aansluitVal);
                 let afsluitDate = new Date(afsluitVal);
                 actieveEindTijd = afsluitDate;
 
-                let diffMs = afsluitDate - aansluitDate;
+                let diffMs = afsluitDate - actieveStartTijd;
                 if (diffMs > 0) {
                     let uren = Math.floor(diffMs / (1000 * 60 * 60));
                     let minuten = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -188,9 +231,11 @@
                 } else {
                     duurTekst = "<span style='color:red;'>Afsluiting moet na aansluiting zijn!</span>";
                     actieveEindTijd = null;
+                    actieveStartTijd = null;
                 }
             } else {
                 actieveEindTijd = null;
+                actieveStartTijd = null;
             }
 
             if (afspraakVal && aansluitVal) {
@@ -216,19 +261,43 @@
 
         function updateCountdown() {
             let timerDisplay = document.getElementById('countdown-display');
-            if (!actieveEindTijd) {
+            let ring = document.getElementById('progress-ring-circle');
+
+            if (!actieveStartTijd || !actieveEindTijd) {
                 timerDisplay.innerText = "--:--:--";
+                if(ring) ring.style.strokeDashoffset = circumference;
                 return;
             }
 
             let nu = new Date();
+            let totaalDuur = actieveEindTijd - actieveStartTijd;
+            let verstreken = nu - actieveStartTijd;
             let restris = actieveEindTijd - nu;
 
             if (restris <= 0) {
-                timerDisplay.innerText = "BEHANDELING KLAAR";
-                timerDisplay.style.color = "#00ff66";
+                timerDisplay.innerText = "KLAAR";
+                if(ring) {
+                    ring.style.strokeDashoffset = 0;
+                    ring.style.stroke = "#00ff66";
+                }
                 return;
             }
+
+            // Bereken voortgang percentage (0.0 tot 1.0)
+            let voortgang = verstreken / totaalDuur;
+            if (voortgang < 0) voortgang = 0;
+            if (voortgang > 1) voortgang = 1;
+
+            // Update SVG ring offset
+            let offset = circumference - (voortgang * circumference);
+            ring.style.strokeDashoffset = offset;
+
+            // Kleurovergang van Rood naar Groen naarmate de tijd vordert
+            // Rood: rgb(255, 77, 77) -> Groen: rgb(0, 255, 102)
+            let r = Math.round(255 * (1 - voortgang) + 0 * voortgang);
+            let g = Math.round(77 * (1 - voortgang) + 255 * voortgang);
+            let b = Math.round(77 * (1 - voortgang) + 102 * voortgang);
+            ring.style.stroke = `rgb(${r}, ${g}, ${b})`;
 
             let uren = Math.floor(restris / (1000 * 60 * 60));
             let minuten = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60));
