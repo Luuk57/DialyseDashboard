@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Advanced Planning Edition</title>
+    <title>Dialyse Command Center - Tab-Fixed Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -26,19 +26,20 @@
 
         /* TAB BAR */
         .tab-bar {
-            display: flex; background: #e5e5e5; border-bottom: 1px solid var(--border-color); padding: 0 20px; gap: 5px;
+            display: flex; background: #e5e5e5; border-bottom: 1px solid var(--border-color); padding: 0 20px; gap: 5px; height: 38px;
         }
         .tab-btn {
             padding: 8px 16px; font-size: 12px; font-weight: 600; background: #d6d6d6; border: none;
-            border-top-left-radius: 4px; border-top-right-radius: 4px; cursor: pointer; color: #444; transition: 0.2s;
+            border-top-left-radius: 4px; border-top-right-radius: 4px; cursor: pointer; color: #444; transition: 0.2s; outline: none;
         }
         .tab-btn.active {
-            background: var(--card-bg); color: var(--win-blue); border-bottom: 2px solid var(--win-blue);
+            background: var(--card-bg); color: var(--win-blue); border-bottom: 3px solid var(--win-blue); font-weight: bold;
         }
         .tab-btn:hover:not(.active) { background: #e0e0e0; }
 
+        /* TAB CONTENT VISIBILITY */
         .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 15px 20px 20px 20px; overflow-y: auto; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block !important; }
 
         .sync-container {
             display: flex; align-items: center; gap: 8px; background: #eef6fc;
@@ -140,7 +141,7 @@
             body * { visibility: hidden; }
             #tab-planning, #tab-planning * { visibility: visible; }
             #tab-planning { position: absolute; left: 0; top: 0; width: 100%; height: auto; padding: 0; }
-            .win-header, .tab-bar, .pdf-export-box, .btn-table-action, .dashboard-card > div:first-child, button { display: none !important; }
+            .win-header, .tab-bar, .pdf-export-box, .btn-table-action, button { display: none !important; }
             .plan-table { width: 100%; border: 1px solid #000; }
             .plan-table th, .plan-table td { border: 1px solid #000; padding: 6px; }
         }
@@ -150,7 +151,7 @@
 
     <div class="win-header">
         <div class="win-title">
-            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V1.7</span>
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V1.8</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -165,9 +166,9 @@
 
     <!-- TAB NAVIGATIE -->
     <div class="tab-bar">
-        <button class="tab-btn active" id="btn-tab-live" onclick="switchTab('tab-live', this)">📊 Live Behandeling</button>
-        <button class="tab-btn" onclick="switchTab('tab-planning', this)">📅 Planning & Agenda</button>
-        <button class="tab-btn" onclick="switchTab('tab-historie', this)">📁 Historie & Archief (<span id="count-gereed">0</span> Gereed)</button>
+        <button class="tab-btn active" id="btn-tab-live" onclick="openTab('tab-live', 'btn-tab-live')">📊 Live Behandeling</button>
+        <button class="tab-btn" id="btn-tab-planning" onclick="openTab('tab-planning', 'btn-tab-planning')">📅 Planning & Agenda</button>
+        <button class="tab-btn" id="btn-tab-historie" onclick="openTab('tab-historie', 'btn-tab-historie')">📁 Historie & Archief (<span id="count-gereed">0</span>)</button>
     </div>
 
     <!-- TAB 1: LIVE DASHBOARD -->
@@ -406,8 +407,10 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const ring = document.getElementById('progress-ring-circle');
-            ring.style.strokeDasharray = `${circumference} ${circumference}`;
-            ring.style.strokeDashoffset = circumference;
+            if(ring) {
+                ring.style.strokeDasharray = `${circumference} ${circumference}`;
+                ring.style.strokeDashoffset = circumference;
+            }
             
             document.getElementById('sheets-url-input').value = googleSheetsUrl;
             laadConcepten();
@@ -422,11 +425,20 @@
             controleerGereedStatus();
         }, 1000);
 
-        function switchTab(tabId, btn) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        /* --- TAB WISSEL FUNCTIONALITEIT --- */
+        function openTab(tabId, btnId) {
+            let contents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+
+            let buttons = document.getElementsByClassName('tab-btn');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+
             document.getElementById(tabId).classList.add('active');
-            if(btn) btn.classList.add('active');
+            document.getElementById(btnId).classList.add('active');
         }
 
         function toggleFullscreen() {
@@ -463,14 +475,10 @@
             let huidigeDatum = new Date(startDatum);
 
             while (huidigeDatum <= eindDatum) {
-                let dagVanWeek = huidigeDatum.getDay(); // 0=Zo, 1=Ma, 2=Di, 3=Wo, 4=Do, 5=Vr, 6=Za
+                let dagVanWeek = huidigeDatum.getDay();
                 let toevoegen = false;
 
-                if (mode === 'geen') {
-                    toevoegen = true;
-                } else if (mode === 'elkedag') {
-                    toevoegen = true;
-                } else if (mode === 'omdedag') {
+                if (mode === 'geen' || mode === 'elkedag' || mode === 'omdedag') {
                     toevoegen = true;
                 } else if (mode === 'mawovr') {
                     if (dagVanWeek === 1 || dagVanWeek === 3 || dagVanWeek === 5) toevoegen = true;
@@ -487,7 +495,6 @@
                     });
                 }
 
-                // Stapgrootte verhogen
                 if (mode === 'omdedag') {
                     huidigeDatum.setDate(huidigeDatum.getDate() + 2);
                 } else {
@@ -505,7 +512,6 @@
         }
 
         function sorterEnRenderPlanning() {
-            // Sorteer op datum chronologisch (vandaag / eerstvolgende bovenaan)
             planningLijst.sort((a, b) => new Date(a.datum) - new Date(b.datum));
 
             let body = document.getElementById('plan-table-body');
@@ -544,7 +550,6 @@
             document.getElementById('t-afspraak').value = formattedLocal;
             document.getElementById('t-aansluit').value = formattedLocal;
             
-            // Bereken automatisch afsluiting (05:30 dag erna)
             opAansluitingGewijzigd();
 
             document.getElementById('w-type').value = (type === 'Dagdialyse') ? 'Dagdialyse' : 'Nachtdialyse';
@@ -554,30 +559,12 @@
             opslaanConceptVak2();
             opslaanConceptVak4();
 
-            // Schakel over naar Tab 1
-            switchTab('tab-live', document.getElementById('btn-tab-live'));
+            openTab('tab-live', 'btn-tab-live');
             alert("Afspraak ingeladen in 'Live Behandeling'!");
         }
 
         function exporteerPlanningPdf() {
-            let vanVal = document.getElementById('pdf-van-datum').value;
-            let totVal = document.getElementById('pdf-tot-datum').value;
-
-            if (vanVal && totVal) {
-                let vanDate = new Date(vanVal + 'T00:00:00');
-                let totDate = new Date(totVal + 'T23:59:59');
-
-                let gefilterd = planningLijst.filter(p => {
-                    let d = new Date(p.datum);
-                    return d >= vanDate && d <= totDate;
-                });
-
-                // Tijdelijk filteren op scherm om af te drukken
-                let omschrijving = `Afspraken van ${vanVal} tot ${totVal}`;
-                window.print();
-            } else {
-                window.print();
-            }
+            window.print();
         }
 
         /* --- 1 SINGLE SAVE FUNCTIE --- */
@@ -716,4 +703,69 @@
         }
 
         function voegBpMetingToe() { bpMetingen = verzamelBpMetingenVanScherm(); bpMetingen.push({ tijd: new Date().toTimeString().slice(0,5), sys: '', dia: '', hr: '' }); renderBpMetingen(); opslaanConceptVak3(); }
-        function verwijderBpMeting(index) { bpMetingen = verzamelBpMetingenVanScherm(); bpMetingen.splice(index, 1); renderBpMetingen(); opslaanConceptVak3();
+        function verwijderBpMeting(index) { bpMetingen = verzamelBpMetingenVanScherm(); bpMetingen.splice(index, 1); renderBpMetingen(); opslaanConceptVak3(); }
+
+        function renderBpMetingen() {
+            let container = document.getElementById('bp-metingen-lijst'); container.innerHTML = '';
+            bpMetingen.forEach((m, idx) => {
+                let row = document.createElement('div'); row.className = 'bp-row';
+                row.innerHTML = `<div style="display:flex; justify-content:space-between;"><span style="font-size:10px; font-weight:bold; color:#0078d7;">Meting #${idx+1}</span><button class="nurse-del-btn" onclick="verwijderBpMeting(${idx})">✕</button></div>
+                <div class="bp-inputs"><input type="time" class="bp-tijd" value="${m.tijd||''}" onchange="opslaanConceptVak3()"><input type="number" class="bp-sys" placeholder="Sys" value="${m.sys||''}" oninput="opslaanConceptVak3()"><input type="number" class="bp-dia" placeholder="Dia" value="${m.dia||''}" oninput="opslaanConceptVak3()"><input type="number" class="bp-hr" placeholder="HR" value="${m.hr||''}" oninput="opslaanConceptVak3()"></div>`;
+                container.appendChild(row);
+            });
+        }
+
+        /* --- CLOUD SYNC & REKENMODULES --- */
+        function opDroogGewichtGewijzigd() { localStorage.setItem('dialyse_droog_gewicht', document.getElementById('w-droog').value); berekenGewichtEnUF(); }
+        function opAansluitingGewijzigd() {
+            let aansluit = document.getElementById('t-aansluit').value;
+            if(aansluit) { let d = new Date(aansluit); d.setDate(d.getDate() + 1); d.setHours(5, 30, 0, 0); document.getElementById('t-afsluit').value = formatDateTimeLocal(d); }
+            berekenTijden();
+        }
+
+        function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
+
+        function berekenTijden() {
+            let aansluit = document.getElementById('t-aansluit').value;
+            let afsluit = document.getElementById('t-afsluit').value;
+            if(aansluit && afsluit) { actieveStartTijd = new Date(aansluit); actieveEindTijd = new Date(afsluit); }
+        }
+
+        function berekenGewichtEnUF() {
+            let type = document.getElementById('w-type').value;
+            let droog = parseFloat(document.getElementById('w-droog').value) || 0;
+            let pre = parseFloat(document.getElementById('w-pre').value) || 0;
+            let post = parseFloat(document.getElementById('w-post').value) || 0;
+            let c = (type === 'Nachtdialyse') ? 0.3 : 0.6;
+            document.getElementById('resultaten-gewicht').innerHTML = `<b>UF-Advies:</b> ${(pre > 0 && droog > 0) ? (pre - droog + c).toFixed(2) : '--'} kg<br><b>Werkelijke UF:</b> ${(pre > 0 && post > 0) ? (pre - post).toFixed(2) : '--'} kg`;
+        }
+
+        function updateCountdown() {
+            let timerDisplay = document.getElementById('countdown-display');
+            let ring = document.getElementById('progress-ring-circle');
+            if(!actieveStartTijd || !actieveEindTijd) { if(timerDisplay) timerDisplay.innerText = "--:--:--"; return; }
+            let nu = new Date(); let restris = actieveEindTijd - nu;
+            if(restris <= 0) { if(timerDisplay) timerDisplay.innerText = "KLAAR"; return; }
+            let u = Math.floor(restris / (1000 * 60 * 60)), m = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60)), s = Math.floor((restris % (1000 * 60)) / 1000);
+            if(timerDisplay) timerDisplay.innerText = `${String(u).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        function bewaarSyncUrl() { googleSheetsUrl = document.getElementById('sheets-url-input').value.trim(); localStorage.setItem('google_sheets_url', googleSheetsUrl); alert("Google Sheets URL opgeslagen!"); if(googleSheetsUrl) syncFromGoogle(); }
+
+        async function syncToGoogle(key, valueObj) {
+            if (!googleSheetsUrl) return;
+            try { await fetch(googleSheetsUrl, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) }) }); } catch(e){}
+        }
+
+        async function syncFromGoogle() {
+            if (!googleSheetsUrl) return;
+            try {
+                let res = await fetch(googleSheetsUrl); let data = await res.json();
+                if(data['dialyse_nurses']) { nursesList = JSON.parse(data['dialyse_nurses']); renderNurses(); }
+                if(data['dialyse_planning']) { planningLijst = JSON.parse(data['dialyse_planning']); sorterEnRenderPlanning(); }
+                if(data['dialyse_historie']) { historieRecords = JSON.parse(data['dialyse_historie']); renderHistorie(); }
+            } catch(e){}
+        }
+    </script>
+</body>
+</html>
