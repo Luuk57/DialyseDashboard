@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dialyse Command Center - Multi-Nurse & Fullscreen Edition</title>
+    <title>Dialyse Command Center - Planning & Archief Edition</title>
     <style>
         :root {
             --win-blue: #0078d7;
@@ -23,24 +23,36 @@
         }
         .win-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
         .win-title span { color: var(--win-blue); }
-        
+
+        /* TAB BAR */
+        .tab-bar {
+            display: flex; background: #e5e5e5; border-bottom: 1px solid var(--border-color); padding: 0 20px; gap: 5px;
+        }
+        .tab-btn {
+            padding: 8px 16px; font-size: 12px; font-weight: 600; background: #d6d6d6; border: none;
+            border-top-left-radius: 4px; border-top-right-radius: 4px; cursor: pointer; color: #444; transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--card-bg); color: var(--win-blue); border-bottom: 2px solid var(--win-blue);
+        }
+        .tab-btn:hover:not(.active) { background: #e0e0e0; }
+
+        .tab-content { display: none; width: 100%; height: calc(100vh - 88px); padding: 20px; overflow-y: auto; }
+        .tab-content.active { display: block; }
+
         .sync-container {
             display: flex; align-items: center; gap: 8px; background: #eef6fc;
             padding: 4px 8px; border-radius: 4px; border: 1px solid #cce4f7;
         }
-        .sync-input {
-            width: 240px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px;
-        }
+        .sync-input { width: 220px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
         .sync-btn, .fullscreen-btn {
             background: var(--win-blue); border: none; color: #fff;
-            padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; gap: 4px; transition: 0.2s;
+            padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s;
         }
         .sync-btn:hover, .fullscreen-btn:hover { background: #005a9e; }
 
-        .dashboard-container {
-            width: 100%; height: calc(100vh - 50px); padding: 20px;
-            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px;
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; height: 100%;
         }
 
         .dashboard-card {
@@ -54,105 +66,59 @@
             text-transform: uppercase; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;
         }
 
-        .draft-badge {
-            font-size: 10px; font-weight: normal; text-transform: none; color: #888; background: #eee; padding: 2px 6px; border-radius: 3px;
-        }
+        .draft-badge { font-size: 10px; font-weight: normal; text-transform: none; color: #888; background: #eee; padding: 2px 6px; border-radius: 3px; }
 
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 3px; }
-        .form-group input[type="number"], 
-        .form-group input[type="text"], 
-        .form-group input[type="datetime-local"], 
-        .form-group select,
-        .form-group textarea {
+        .form-group input[type="number"], .form-group input[type="text"], .form-group input[type="datetime-local"], .form-group select, .form-group textarea {
             width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; background: #fafafa;
         }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #fff; border-color: var(--win-blue); outline: none; }
 
-        .calc-box {
-            background: #eef6fc; border-left: 4px solid var(--win-blue);
-            padding: 8px; margin-top: 8px; font-size: 11px; line-height: 1.4;
-        }
-        .calc-box b { color: #000; }
+        .calc-box { background: #eef6fc; border-left: 4px solid var(--win-blue); padding: 8px; margin-top: 8px; font-size: 11px; line-height: 1.4; }
 
-        /* Grote Ronde Klok */
+        /* Ronde Klok */
         .circular-timer-container {
-            position: relative; width: 190px; height: 190px; margin: 10px auto;
+            position: relative; width: 170px; height: 170px; margin: 10px auto;
             display: flex; align-items: center; justify-content: center;
             background: #1b1b1b; border-radius: 50%; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
         }
         .progress-ring { transform: rotate(-90deg); }
         .progress-ring-bg { stroke: #333; }
         .progress-ring-fill { stroke: #ff4d4d; transition: stroke-dashoffset 0.5s linear, stroke 0.5s ease; stroke-linecap: round; }
-        .timer-center { position: absolute; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 140px; }
-        .countdown-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
-        .countdown-timer { font-size: 20px; font-weight: bold; font-family: 'Courier New', Courier, monospace; color: #fff; }
+        .timer-center { position: absolute; text-align: center; }
+        .countdown-label { font-size: 10px; color: #aaa; text-transform: uppercase; margin-bottom: 2px; }
+        .countdown-timer { font-size: 18px; font-weight: bold; font-family: monospace; color: #fff; }
 
-        /* Verpleging beheer styling met Vinkjes (Checkboxes) */
-        .nurse-box {
-            background: #fafafa; border: 1px solid #ddd; padding: 10px; border-radius: 3px; margin-top: 10px;
-        }
-        .nurse-checkbox-list {
-            max-height: 80px; overflow-y: auto; margin-top: 5px; display: flex; flex-direction: column; gap: 4px; padding-top: 5px; border-top: 1px solid #eee;
-        }
-        .nurse-item-row {
-            display: flex; justify-content: space-between; align-items: center; font-size: 12px; background: #fff; border: 1px solid #eee; padding: 4px 6px; border-radius: 3px;
-        }
-        .nurse-item-row label {
-            display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; color: #333; margin: 0;
-        }
-        .nurse-del-btn {
-            background: #e81123; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px;
-            font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
+        .nurse-box { background: #fafafa; border: 1px solid #ddd; padding: 10px; border-radius: 3px; margin-top: 10px; }
+        .nurse-checkbox-list { max-height: 70px; overflow-y: auto; margin-top: 5px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #eee; padding-top: 5px; }
+        .nurse-item-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; background: #fff; border: 1px solid #eee; padding: 3px 5px; }
+        .nurse-del-btn { background: #e81123; color: #fff; border: none; border-radius: 50%; width: 15px; height: 15px; font-size: 8px; cursor: pointer; }
 
-        /* Toediening sectie */
-        .toediening-box {
-            border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 12px;
-        }
-        .toediening-title {
-            font-size: 12px; font-weight: 700; color: var(--win-blue); margin-bottom: 10px; text-transform: uppercase;
-        }
-        .checkbox-group {
-            display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; margin-bottom: 8px;
-        }
-        .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
-        .multi-check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
-        .multi-check-label { width: 100px; font-weight: 600; color: #333; }
-        .multi-checks { display: flex; gap: 8px; }
+        .toediening-box { border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 12px; }
+        .toediening-title { font-size: 12px; font-weight: 700; color: var(--win-blue); margin-bottom: 10px; }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
 
-        /* Bloeddruk metingen lijst */
-        .bp-entry-container {
-            max-height: 180px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
-        }
-        .bp-row {
-            background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; display: flex; flex-direction: column; gap: 6px;
-        }
-        .bp-row-header {
-            display: flex; justify-content: space-between; align-items: center; font-size: 11px;
-        }
-        .bp-inputs {
-            display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; align-items: center;
-        }
-        .bp-tag {
-            font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 3px; text-align: center;
-        }
-        .bp-tag-green { background: #d4edda; color: #155724; }
-        .bp-tag-orange { background: #ffe8cc; color: #d97706; }
-        .bp-tag-red { background: #f8d7da; color: #721c24; }
+        .bp-entry-container { max-height: 160px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .bp-row { background: #fafafa; border: 1px solid #ddd; padding: 8px; border-radius: 4px; }
+        .bp-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 6px; }
 
-        .btn-action {
-            margin-top: auto; padding: 8px; background: var(--win-blue); color: #fff;
-            border: none; border-radius: 3px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.2s;
-        }
-        .btn-action:hover { background: #005a9e; }
+        .btn-action { margin-top: auto; padding: 8px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; font-weight: 600; cursor: pointer; font-size: 12px; }
+
+        /* PLANNING & HISTORIE STYLES */
+        .plan-table, .history-card { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
+        .plan-table th, .plan-table td { border: 1px solid #ddd; padding: 8px; font-size: 12px; text-align: left; }
+        .plan-table th { background: #0078d7; color: white; }
+
+        .record-navigator { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10px 20px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 15px; }
+        .nav-btn { padding: 6px 14px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; cursor: pointer; font-weight: 600; }
+        .nav-btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div class="win-header">
         <div class="win-title">
-            <span>🪟</span> DIALYSE COMMAND CENTER <span>// DASHBOARD</span>
+            <span>🪟</span> DIALYSE COMMAND CENTER <span>// V1.5</span>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Volledig Scherm</button>
@@ -165,187 +131,205 @@
         </div>
     </div>
 
-    <div class="dashboard-container">
-        
-        <!-- VAK 1: BEHANDELING -->
-        <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
-            <div class="card-header">
-                <span>Vak 1: Behandeling & Tijden</span>
-                <span class="draft-badge" id="draft-vak1">Tijdelijk opgeslagen</span>
-            </div>
+    <!-- TAB NAVIGATIE -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('tab-live', this)">📊 Live Behandeling</button>
+        <button class="tab-btn" onclick="switchTab('tab-planning', this)">📅 Planning & Agenda</button>
+        <button class="tab-btn" onclick="switchTab('tab-historie', this)">📁 Historie & Archief (<span id="count-gereed">0</span> Gereed)</button>
+    </div>
+
+    <!-- TAB 1: LIVE DASHBOARD -->
+    <div id="tab-live" class="tab-content active">
+        <div class="dashboard-grid">
             
-            <div class="form-group">
-                <label>Afspraak Datum & Tijd:</label>
-                <input type="datetime-local" id="t-afspraak" oninput="berekenTijden(); opslaanConceptVak1();">
-            </div>
-            
-            <div class="form-group">
-                <label>Daadwerkelijke Aansluit Tijd:</label>
-                <input type="datetime-local" id="t-aansluit" oninput="opAansluitingGewijzigd(); opslaanConceptVak1();">
-            </div>
-
-            <div class="form-group">
-                <label>Afsluit Tijd (Aanpasbaar):</label>
-                <input type="datetime-local" id="t-afsluit" oninput="berekenTijden(); opslaanConceptVak1();">
-            </div>
-
-            <div class="calc-box" id="resultaten-tijden">
-                <b>Duur Behandeling:</b> nog niet berekend<br>
-                <b>Verschil met Afspraak:</b> nog niet berekend
-            </div>
-
-            <!-- GROTE RONDE KLOK -->
-            <div class="circular-timer-container">
-                <svg class="progress-ring" width="180" height="180">
-                    <circle class="progress-ring-bg" stroke-width="12" fill="transparent" r="78" cx="90" cy="90"/>
-                    <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="12" fill="transparent" r="78" cx="90" cy="90"/>
-                </svg>
-                <div class="timer-center">
-                    <div class="countdown-label">Resterend</div>
-                    <div class="countdown-timer" id="countdown-display">--:--:--</div>
+            <!-- VAK 1 -->
+            <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
+                <div class="card-header">
+                    <span>Vak 1: Behandeling & Tijden</span>
+                    <span class="draft-badge">Auto-Save</span>
                 </div>
-            </div>
-
-            <!-- MEERDERE VERPLEGING SELECTIE & BEHEER -->
-            <div class="nurse-box">
-                <label style="font-size: 11px; font-weight: 600; color: #555;">Verpleging Selecteren (Meerdere mogelijk):</label>
                 
-                <div class="nurse-checkbox-list" id="nurse-checkbox-container">
-                    <!-- Dynamische lijst van verpleegkundigen met checkboxes -->
+                <div class="form-group">
+                    <label>Afspraak Datum & Tijd:</label>
+                    <input type="datetime-local" id="t-afspraak" oninput="berekenTijden(); opslaanConceptVak1();">
                 </div>
-
-                <div style="display: flex; gap: 5px; margin-top: 8px;">
-                    <input type="text" id="new-nurse-name" placeholder="Nieuwe naam..." style="font-size: 11px; padding: 4px;">
-                    <button onclick="addNurse()" style="padding: 4px 8px; background: #3d9970; color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">Toevoegen</button>
-                </div>
-            </div>
-
-            <button class="btn-action" onclick="slaBehandelingOpDefinitief()">BEHANDELING DEFINITIEF OPSLAAN & SYNC</button>
-        </div>
-
-        <!-- VAK 2: GEWICHT & UF & TOEDIENING -->
-        <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
-            <div class="card-header">
-                <span>Vak 2: Gewicht, UF & Toediening</span>
-                <span class="draft-badge" id="draft-vak2">Tijdelijk opgeslagen</span>
-            </div>
-            
-            <div class="form-group">
-                <label>Type Behandeling:</label>
-                <select id="w-type" onchange="berekenGewichtEnUF(); opslaanConceptVak2();">
-                    <option value="nacht">Nachtdialyse (Constante 0,3)</option>
-                    <option value="dag">Dagdialyse (Constante 0,6)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Droog Gewicht (kg) - Permanent Bewaard:</label>
-                <input type="number" step="0.1" id="w-droog" value="109" oninput="opDroogGewichtGewijzigd(); opslaanConceptVak2();">
-            </div>
-
-            <div class="form-group">
-                <label>Pre-Gewicht (kg):</label>
-                <input type="number" step="0.1" id="w-pre" placeholder="bijv. 112.5" oninput="berekenGewichtEnUF(); opslaanConceptVak2();">
-            </div>
-
-            <div class="form-group">
-                <label>Post-Gewicht (kg):</label>
-                <input type="number" step="0.1" id="w-post" placeholder="bijv. 109.2" oninput="berekenGewichtEnUF(); opslaanConceptVak2();">
-            </div>
-
-            <div class="form-group">
-                <label>Gebruikt UF (Machine - Liter):</label>
-                <input type="number" step="0.1" id="w-gebruikt-uf" placeholder="bijv. 3.5" oninput="opslaanConceptVak2()">
-            </div>
-
-            <div class="calc-box" id="resultaten-gewicht">
-                <b>UF-Advies:</b> -- kg<br>
-                <b>Werkelijke UF (Pre - Post):</b> -- kg
-            </div>
-
-            <!-- TOEDIENING SECTIE -->
-            <div class="toediening-box">
-                <div class="toediening-title">💉 Toediening & Metingen</div>
                 
-                <div style="display: flex; gap: 20px; margin-bottom: 8px;">
-                    <label class="checkbox-group">
-                        <input type="checkbox" id="chk-epo" onchange="opslaanConceptVak2()"> Epo
-                    </label>
-                    <label class="checkbox-group">
-                        <input type="checkbox" id="chk-ijzer" onchange="opslaanConceptVak2()"> IJzer
-                    </label>
+                <div class="form-group">
+                    <label>Daadwerkelijke Aansluit Tijd:</label>
+                    <input type="datetime-local" id="t-aansluit" oninput="opAansluitingGewijzigd(); opslaanConceptVak1();">
                 </div>
 
-                <!-- Fragmin 2500 -->
-                <div class="multi-check-row">
-                    <span class="multi-check-label">Fragmin 2500:</span>
-                    <div class="multi-checks">
-                        <input type="checkbox" class="chk-f2500" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
-                        <input type="checkbox" class="chk-f2500" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
-                        <input type="checkbox" class="chk-f2500" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
-                        <input type="checkbox" class="chk-f2500" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
+                <div class="form-group">
+                    <label>Afsluit Tijd (Aanpasbaar):</label>
+                    <input type="datetime-local" id="t-afsluit" oninput="berekenTijden(); opslaanConceptVak1();">
+                </div>
+
+                <div class="calc-box" id="resultaten-tijden">
+                    <b>Duur Behandeling:</b> nog niet berekend<br>
+                    <b>Verschil met Afspraak:</b> nog niet berekend
+                </div>
+
+                <!-- KLOK -->
+                <div class="circular-timer-container">
+                    <svg class="progress-ring" width="170" height="170">
+                        <circle class="progress-ring-bg" stroke-width="12" fill="transparent" r="72" cx="85" cy="85"/>
+                        <circle id="progress-ring-circle" class="progress-ring-fill" stroke-width="12" fill="transparent" r="72" cx="85" cy="85"/>
+                    </svg>
+                    <div class="timer-center">
+                        <div class="countdown-label">Resterend</div>
+                        <div class="countdown-timer" id="countdown-display">--:--:--</div>
                     </div>
                 </div>
 
-                <!-- Fragmin 5000 -->
-                <div class="multi-check-row">
-                    <span class="multi-check-label">Fragmin 5000:</span>
-                    <div class="multi-checks">
-                        <input type="checkbox" class="chk-f5000" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
-                        <input type="checkbox" class="chk-f5000" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
-                        <input type="checkbox" class="chk-f5000" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
-                        <input type="checkbox" class="chk-f5000" onchange="opslaanConceptVak2()" style="width:16px; height:16px;">
+                <!-- VERPLEGING -->
+                <div class="nurse-box">
+                    <label style="font-size: 11px; font-weight: 600; color: #555;">Verpleging Selecteren:</label>
+                    <div class="nurse-checkbox-list" id="nurse-checkbox-container"></div>
+                    <div style="display: flex; gap: 5px; margin-top: 6px;">
+                        <input type="text" id="new-nurse-name" placeholder="Nieuwe naam..." style="font-size: 11px; padding: 3px;">
+                        <button onclick="addNurse()" style="padding: 3px 6px; background: #3d9970; color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">Add</button>
                     </div>
                 </div>
 
-                <!-- Shuntflow -->
-                <div style="margin-top: 10px;">
-                    <label class="checkbox-group">
-                        <input type="checkbox" id="chk-shuntflow" onchange="toggleShuntflowInput(); opslaanConceptVak2();"> Shuntflow
-                    </label>
-                    <div id="shuntflow-field" style="display: none; margin-top: 5px;">
-                        <input type="number" id="input-shuntflow" placeholder="bijv. 1200" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4); opslaanConceptVak2();" style="font-size: 13px; font-weight: bold; padding: 6px;">
-                    </div>
-                </div>
+                <button class="btn-action" onclick="slaBehandelingOpDefinitief()">BEHANDELING DEFINITIEF OPSLAAN & SYNC</button>
             </div>
 
-            <button class="btn-action" onclick="slaGewichtOpDefinitief()">GEWICHT & TOEDIENING DEFINITIEF OPSLAAN & SYNC</button>
-        </div>
+            <!-- VAK 2 -->
+            <div class="dashboard-card" style="grid-column: span 1; grid-row: span 2;">
+                <div class="card-header">
+                    <span>Vak 2: Gewicht, UF & Toediening</span>
+                    <span class="draft-badge">Auto-Save</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Type Behandeling:</label>
+                    <select id="w-type" onchange="berekenGewichtEnUF(); opslaanConceptVak2();">
+                        <option value="nacht">Nachtdialyse (Constante 0,3)</option>
+                        <option value="dag">Dagdialyse (Constante 0,6)</option>
+                    </select>
+                </div>
 
-        <!-- VAK 3: BLOEDDRUK & HARTSLAG -->
-        <div class="dashboard-card">
+                <div class="form-group">
+                    <label>Droog Gewicht (kg):</label>
+                    <input type="number" step="0.1" id="w-droog" value="109" oninput="opDroogGewichtGewijzigd(); opslaanConceptVak2();">
+                </div>
+
+                <div class="form-group">
+                    <label>Pre-Gewicht (kg):</label>
+                    <input type="number" step="0.1" id="w-pre" placeholder="bijv. 112.5" oninput="berekenGewichtEnUF(); opslaanConceptVak2();">
+                </div>
+
+                <div class="form-group">
+                    <label>Post-Gewicht (kg):</label>
+                    <input type="number" step="0.1" id="w-post" placeholder="bijv. 109.2" oninput="berekenGewichtEnUF(); opslaanConceptVak2();">
+                </div>
+
+                <div class="form-group">
+                    <label>Gebruikt UF (Machine - Liter):</label>
+                    <input type="number" step="0.1" id="w-gebruikt-uf" placeholder="bijv. 3.5" oninput="opslaanConceptVak2()">
+                </div>
+
+                <div class="calc-box" id="resultaten-gewicht">
+                    <b>UF-Advies:</b> -- kg<br>
+                    <b>Werkelijke UF:</b> -- kg
+                </div>
+
+                <div class="toediening-box">
+                    <div class="toediening-title">💉 Toediening & Metingen</div>
+                    <div style="display: flex; gap: 20px; margin-bottom: 8px;">
+                        <label class="checkbox-group"><input type="checkbox" id="chk-epo" onchange="opslaanConceptVak2()"> Epo</label>
+                        <label class="checkbox-group"><input type="checkbox" id="chk-ijzer" onchange="opslaanConceptVak2()"> IJzer</label>
+                    </div>
+                </div>
+
+                <button class="btn-action" onclick="slaGewichtOpDefinitief()">GEWICHT DEFINITIEF OPSLAAN & SYNC</button>
+            </div>
+
+            <!-- VAK 3 -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span>Vak 3: Bloeddruk & Hartslag</span>
+                    <button onclick="voegBpMetingToe()" style="padding: 2px 6px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; font-size: 10px; cursor: pointer;">+ Meting</button>
+                </div>
+                <div class="bp-entry-container" id="bp-metingen-lijst"></div>
+                <button class="btn-action" style="margin-top: 10px;" onclick="slaBloeddrukOpDefinitief()">BLOEDDRUK DEFINITIEF OPSLAAN & SYNC</button>
+            </div>
+
+            <!-- VAK 4 -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <span>Vak 4: Notities</span>
+                </div>
+                <textarea id="notities-text" placeholder="Typ hier opmerkingen..." oninput="opslaanConceptVak4()" style="flex-grow: 1; resize: none; padding: 8px; font-size: 12px; border: 1px solid #ccc;"></textarea>
+                <button class="btn-action" style="margin-top: 10px;" onclick="slaNotitiesOpDefinitief()">NOTITIES DEFINITIEF OPSLAAN & SYNC</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TAB 2: PLANNING -->
+    <div id="tab-planning" class="tab-content">
+        <div class="dashboard-card" style="max-width: 800px; margin: 0 auto;">
             <div class="card-header">
-                <span>Vak 3: Bloeddruk & Hartslag</span>
-                <span class="draft-badge" id="draft-vak3">Tijdelijk opgeslagen</span>
+                <span>📅 Nieuwe Dialyse Inplannen</span>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <label style="font-size: 11px; font-weight: 600; color: #555;">Metingenoverzicht:</label>
-                <button onclick="voegBpMetingToe()" style="padding: 3px 8px; background: var(--win-blue); color: #fff; border: none; border-radius: 3px; font-size: 11px; cursor: pointer;">+ Meting Toevoegen</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Datum & Geplande Tijd:</label>
+                    <input type="datetime-local" id="plan-datum">
+                </div>
+                <div class="form-group">
+                    <label>Type Behandeling:</label>
+                    <select id="plan-type">
+                        <option value="Nachtdialyse">Nachtdialyse</option>
+                        <option value="Dagdialyse">Dagdialyse</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="bp-entry-container" id="bp-metingen-lijst">
-                <!-- Dynamische metingen rijen -->
+            <div class="form-group">
+                <label>Bijzonderheden / Opmerkingen voor de verpleging:</label>
+                <input type="text" id="plan-note" placeholder="bijv. Shuntcontrole gepland...">
             </div>
 
-            <button class="btn-action" style="margin-top: 10px;" onclick="slaBloeddrukOpDefinitief()">BLOEDDRUK DEFINITIEF OPSLAAN & SYNC</button>
-        </div>
+            <button class="btn-action" style="margin-bottom: 20px;" onclick="voegPlanningToe()">VOEG TOE AAN PLANNING</button>
 
-        <!-- VAK 4: NOTITIES -->
-        <div class="dashboard-card">
             <div class="card-header">
-                <span>Vak 4: Notities</span>
-                <span class="draft-badge" id="draft-vak4">Tijdelijk opgeslagen</span>
-            </div>
-            
-            <div class="form-group" style="flex-grow: 1; display: flex; flex-direction: column;">
-                <label>Behandelingsnotities & Opmerkingen:</label>
-                <textarea id="notities-text" placeholder="Typ hier bijzonderheden, symptomen of notities over de behandeling..." oninput="opslaanConceptVak4()" style="flex-grow: 1; resize: none; padding: 10px; font-family: inherit; font-size: 12px; line-height: 1.4; border: 1px solid #ccc; border-radius: 3px; background: #fafafa;"></textarea>
+                <span>📋 Geplande Behandelingen</span>
             </div>
 
-            <button class="btn-action" onclick="slaNotitiesOpDefinitief()">NOTITIES DEFINITIEF OPSLAAN & SYNC</button>
+            <table class="plan-table">
+                <thead>
+                    <tr>
+                        <th>Datum / Tijd</th>
+                        <th>Type</th>
+                        <th>Opmerking</th>
+                        <th>Actie</th>
+                    </tr>
+                </thead>
+                <tbody id="plan-table-body">
+                    <!-- Dynamische planning rijen -->
+                </tbody>
+            </table>
         </div>
+    </div>
 
+    <!-- TAB 3: HISTORIE & ARCHIEF -->
+    <div id="tab-historie" class="tab-content">
+        <div style="max-width: 900px; margin: 0 auto;">
+            
+            <div class="record-navigator">
+                <button class="nav-btn" id="btn-prev-rec" onclick="bladerRecord(-1)">◀ Vorige Record</button>
+                <span style="font-weight: 600; font-size: 14px;" id="record-counter-text">Record 0 van 0</span>
+                <button class="nav-btn" id="btn-next-rec" onclick="bladerRecord(1)">Volgende Record ▶</button>
+            </div>
+
+            <div id="history-record-view" class="dashboard-card" style="min-height: 400px;">
+                <p style="text-align: center; color: #888; padding-top: 50px;">Geen afgeronde behandelingen (>= 4:00 uur) gevonden in het archief.</p>
+            </div>
+
+        </div>
     </div>
 
     <script>
@@ -353,450 +337,232 @@
         let actieveEindTijd = null;
         let googleSheetsUrl = localStorage.getItem('google_sheets_url') || '';
         
-        const radius = 78;
+        const radius = 72;
         const circumference = 2 * Math.PI * radius;
         let nursesList = ["Jan", "Sophie", "Mark"];
         let geselecteerdeNurses = [];
         let bpMetingen = [];
-        
+        let planningLijst = [];
+        let historieRecords = [];
+        let huidigRecordIndex = 0;
+
         window.addEventListener('DOMContentLoaded', () => {
             const ring = document.getElementById('progress-ring-circle');
             ring.style.strokeDasharray = `${circumference} ${circumference}`;
             ring.style.strokeDashoffset = circumference;
             
             document.getElementById('sheets-url-input').value = googleSheetsUrl;
-
             laadConcepten();
 
-            if(googleSheetsUrl) {
-                syncFromGoogle();
-            } else {
-                renderNurses();
-            }
+            if(googleSheetsUrl) syncFromGoogle();
+            else renderNurses();
         });
 
         setInterval(() => {
             document.getElementById('system-clock').innerText = new Date().toLocaleString();
             updateCountdown();
+            controleerGereedStatus();
         }, 1000);
 
-        /* --- VOLLEDIG SCHERM MODUS --- */
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    alert(`Fout bij inschakelen volledig scherm: ${err.message}`);
-                });
+                document.documentElement.requestFullscreen().catch(e => alert(e.message));
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        /* --- AUTOMATISCHE GEREED CHECK (>= 4:00 UUR) --- */
+        function controleerGereedStatus() {
+            if (!actieveStartTijd) return;
+            let nu = new Date();
+            let verstrekenMs = nu - actieveStartTijd;
+            let verstrekenUren = verstrekenMs / (1000 * 60 * 60);
+
+            // Als verstreken duur >= 4.0 uur is, markeer en archiveer
+            if (verstrekenUren >= 4.0) {
+                let d1 = localStorage.getItem('draft_vak1');
+                let d2 = localStorage.getItem('draft_vak2');
+                let d3 = localStorage.getItem('draft_vak3');
+                let d4 = localStorage.getItem('draft_vak4');
+
+                if (d1 || d2 || d3 || d4) {
+                    let voltooidRecord = {
+                        datum: new Date().toISOString(),
+                        vak1: d1 ? JSON.parse(d1) : {},
+                        vak2: d2 ? JSON.parse(d2) : {},
+                        vak3: d3 ? JSON.parse(d3) : [],
+                        vak4: d4 || ''
+                    };
+
+                    historieRecords.unshift(voltooidRecord);
+                    syncToGoogle('dialyse_historie', historieRecords);
+                    
+                    // Wis huidige concept voor nieuwe sessie
+                    localStorage.removeItem('draft_vak1');
+                    localStorage.removeItem('draft_vak2');
+                    localStorage.removeItem('draft_vak3');
+                    localStorage.removeItem('draft_vak4');
+
+                    renderHistorie();
                 }
             }
         }
 
-        /* --- TIJDELIJKE OPSLAG (CONCEPTEN / AUTO-SAVE) --- */
+        /* --- PLANNING LOGICA --- */
+        function voegPlanningToe() {
+            let datum = document.getElementById('plan-datum').value;
+            let type = document.getElementById('plan-type').value;
+            let note = document.getElementById('plan-note').value;
+
+            if(!datum) { alert("Kies een datum/tijd!"); return; }
+
+            planningLijst.push({ datum, type, note });
+            renderPlanning();
+            syncToGoogle('dialyse_planning', planningLijst);
+
+            document.getElementById('plan-datum').value = '';
+            document.getElementById('plan-note').value = '';
+        }
+
+        function verwijderPlanning(index) {
+            planningLijst.splice(index, 1);
+            renderPlanning();
+            syncToGoogle('dialyse_planning', planningLijst);
+        }
+
+        function renderPlanning() {
+            let body = document.getElementById('plan-table-body');
+            body.innerHTML = '';
+            planningLijst.forEach((p, idx) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(p.datum).toLocaleString()}</td>
+                    <td>${p.type}</td>
+                    <td>${p.note || '-'}</td>
+                    <td><button onclick="verwijderPlanning(${idx})" style="background:red; color:#fff; border:none; padding:3px 6px; border-radius:2px; cursor:pointer;">✕</button></td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        /* --- HISTORIE BLADEREN --- */
+        function renderHistorie() {
+            document.getElementById('count-gereed').innerText = historieRecords.length;
+            let counter = document.getElementById('record-counter-text');
+            let view = document.getElementById('history-record-view');
+
+            if(historieRecords.length === 0) {
+                counter.innerText = "Record 0 van 0";
+                view.innerHTML = `<p style="text-align: center; color: #888; padding-top: 50px;">Geen afgeronde behandelingen (>= 4:00 uur) gevonden in het archief.</p>`;
+                return;
+            }
+
+            counter.innerText = `Record ${huidigRecordIndex + 1} van ${historieRecords.length}`;
+            let rec = historieRecords[huidigRecordIndex];
+
+            let bpTekst = (rec.vak3 || []).map(b => `${b.tijd}: ${b.sys}/${b.dia} (HR: ${b.hr})`).join('<br>');
+
+            view.innerHTML = `
+                <div class="card-header">
+                    <span>RECORD DATUM: ${new Date(rec.datum).toLocaleString()}</span>
+                </div>
+                <div style="font-size:12px; line-height:1.6;">
+                    <b>Behandeling:</b> Aansluiting op ${rec.vak1.aansluit || '-'}, Verpleging: ${(rec.vak1.verpleging || []).join(', ')}<br>
+                    <b>Gewichten:</b> Droog: ${rec.vak2.droog || '-'} kg, Pre: ${rec.vak2.pre || '-'} kg, Post: ${rec.vak2.post || '-'} kg (Machine UF: ${rec.vak2.gebruiktUf || '-'} L)<br>
+                    <b>Bloeddrukmetingen:</b><br>${bpTekst || 'Geen metingen'}<br><br>
+                    <b>Notities:</b> ${rec.vak4 || 'Geen notities'}
+                </div>
+            `;
+        }
+
+        function bladerRecord(richting) {
+            huidigRecordIndex += richting;
+            if(huidigRecordIndex < 0) huidigRecordIndex = 0;
+            if(huidigRecordIndex >= historieRecords.length) huidigRecordIndex = historieRecords.length - 1;
+            renderHistorie();
+        }
+
+        /* --- AUTO-SAVE CONCEPTEN --- */
         function opslaanConceptVak1() {
-            let data = {
-                afspraak: document.getElementById('t-afspraak').value,
-                aansluit: document.getElementById('t-aansluit').value,
-                afsluit: document.getElementById('t-afsluit').value,
-                verpleging: verzamelGeselecteerdeNurses()
-            };
+            let data = { afspraak: document.getElementById('t-afspraak').value, aansluit: document.getElementById('t-aansluit').value, afsluit: document.getElementById('t-afsluit').value, verpleging: verzamelGeselecteerdeNurses() };
             localStorage.setItem('draft_vak1', JSON.stringify(data));
         }
 
         function opslaanConceptVak2() {
-            let f2500Val = [];
-            document.querySelectorAll('.chk-f2500').forEach(box => f2500Val.push(box.checked));
-
-            let f5000Val = [];
-            document.querySelectorAll('.chk-f5000').forEach(box => f5000Val.push(box.checked));
-
-            let data = {
-                type: document.getElementById('w-type').value,
-                droog: document.getElementById('w-droog').value,
-                pre: document.getElementById('w-pre').value,
-                post: document.getElementById('w-post').value,
-                gebruiktUf: document.getElementById('w-gebruikt-uf').value,
-                epo: document.getElementById('chk-epo').checked,
-                ijzer: document.getElementById('chk-ijzer').checked,
-                fragmin2500: f2500Val,
-                fragmin5000: f5000Val,
-                shuntflowActive: document.getElementById('chk-shuntflow').checked,
-                shuntflowValue: document.getElementById('input-shuntflow').value
-            };
+            let data = { type: document.getElementById('w-type').value, droog: document.getElementById('w-droog').value, pre: document.getElementById('w-pre').value, post: document.getElementById('w-post').value, gebruiktUf: document.getElementById('w-gebruikt-uf').value, epo: document.getElementById('chk-epo').checked, ijzer: document.getElementById('chk-ijzer').checked };
             localStorage.setItem('draft_vak2', JSON.stringify(data));
         }
 
+        function opslaanConceptVak3() { bpMetingen = verzamelBpMetingenVanScherm(); localStorage.setItem('draft_vak3', JSON.stringify(bpMetingen)); }
+        function opslaanConceptVak4() { localStorage.setItem('draft_vak4', document.getElementById('notities-text').value); }
+
+        function laadConcepten() {
+            let d1 = localStorage.getItem('draft_vak1');
+            if(d1) { let d = JSON.parse(d1); document.getElementById('t-afspraak').value = d.afspraak || ''; document.getElementById('t-aansluit').value = d.aansluit || ''; document.getElementById('t-afsluit').value = d.afsluit || ''; geselecteerdeNurses = d.verpleging || []; berekenTijden(); }
+            let d2 = localStorage.getItem('draft_vak2');
+            if(d2) { let d = JSON.parse(d2); document.getElementById('w-droog').value = d.droog || 109; document.getElementById('w-pre').value = d.pre || ''; document.getElementById('w-post').value = d.post || ''; document.getElementById('w-gebruikt-uf').value = d.gebruiktUf || ''; berekenGewichtEnUF(); }
+            let d3 = localStorage.getItem('draft_vak3'); if(d3) bpMetingen = JSON.parse(d3); renderBpMetingen();
+            let d4 = localStorage.getItem('draft_vak4'); if(d4) document.getElementById('notities-text').value = d4;
+        }
+
+        /* --- VERPLEGING & BLOEDDRUK FUNCTIES --- */
+        function renderNurses() {
+            let container = document.getElementById('nurse-checkbox-container'); container.innerHTML = '';
+            nursesList.forEach((name, index) => {
+                let row = document.createElement('div'); row.className = 'nurse-item-row';
+                let isChecked = geselecteerdeNurses.includes(name) ? 'checked' : '';
+                row.innerHTML = `<label><input type="checkbox" class="chk-nurse-item" value="${name}" ${isChecked} onchange="opslaanConceptVak1()"> ${name}</label><button class="nurse-del-btn" onclick="removeNurse(${index})">✕</button>`;
+                container.appendChild(row);
+            });
+        }
+
+        function verzamelGeselecteerdeNurses() { let gekozen = []; document.querySelectorAll('.chk-nurse-item:checked').forEach(box => gekozen.push(box.value)); geselecteerdeNurses = gekozen; return gekozen; }
+        function addNurse() { let inp = document.getElementById('new-nurse-name'); let name = inp.value.trim(); if(name && !nursesList.includes(name)) { nursesList.push(name); renderNurses(); syncToGoogle('dialyse_nurses', nursesList); inp.value = ''; } }
+        function removeNurse(index) { nursesList.splice(index, 1); renderNurses(); syncToGoogle('dialyse_nurses', nursesList); }
+
         function verzamelBpMetingenVanScherm() {
-            let rijen = document.querySelectorAll('.bp-row');
             let lijst = [];
-            rijen.forEach(row => {
-                let tijd = row.querySelector('.bp-tijd').value;
-                let sys = row.querySelector('.bp-sys').value;
-                let dia = row.querySelector('.bp-dia').value;
-                let hr = row.querySelector('.bp-hr').value;
-                lijst.push({ tijd, sys, dia, hr });
+            document.querySelectorAll('.bp-row').forEach(row => {
+                lijst.push({ tijd: row.querySelector('.bp-tijd').value, sys: row.querySelector('.bp-sys').value, dia: row.querySelector('.bp-dia').value, hr: row.querySelector('.bp-hr').value });
             });
             return lijst;
         }
 
-        function opslaanConceptVak3() {
-            bpMetingen = verzamelBpMetingenVanScherm();
-            localStorage.setItem('draft_vak3', JSON.stringify(bpMetingen));
-        }
-
-        function opslaanConceptVak4() {
-            let notities = document.getElementById('notities-text').value;
-            localStorage.setItem('draft_vak4', notities);
-        }
-
-        function laadConcepten() {
-            let d1 = localStorage.getItem('draft_vak1');
-            if(d1) {
-                let d = JSON.parse(d1);
-                if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
-                if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
-                if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
-                if(d.verpleging && Array.isArray(d.verpleging)) {
-                    geselecteerdeNurses = d.verpleging;
-                }
-                berekenTijden();
-            }
-
-            let d2 = localStorage.getItem('draft_vak2');
-            if(d2) {
-                let d = JSON.parse(d2);
-                if(d.type) document.getElementById('w-type').value = d.type;
-                if(d.droog) document.getElementById('w-droog').value = d.droog;
-                if(d.pre) document.getElementById('w-pre').value = d.pre;
-                if(d.post) document.getElementById('w-post').value = d.post;
-                if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
-                if(d.epo !== undefined) document.getElementById('chk-epo').checked = d.epo;
-                if(d.ijzer !== undefined) document.getElementById('chk-ijzer').checked = d.ijzer;
-
-                if(d.fragmin2500) {
-                    let boxes = document.querySelectorAll('.chk-f2500');
-                    d.fragmin2500.forEach((val, i) => { if(boxes[i]) boxes[i].checked = val; });
-                }
-                if(d.fragmin5000) {
-                    let boxes = document.querySelectorAll('.chk-f5000');
-                    d.fragmin5000.forEach((val, i) => { if(boxes[i]) boxes[i].checked = val; });
-                }
-                if(d.shuntflowActive !== undefined) {
-                    document.getElementById('chk-shuntflow').checked = d.shuntflowActive;
-                    toggleShuntflowInput();
-                }
-                if(d.shuntflowValue) document.getElementById('input-shuntflow').value = d.shuntflowValue;
-                berekenGewichtEnUF();
-            }
-
-            let d3 = localStorage.getItem('draft_vak3');
-            if(d3) {
-                bpMetingen = JSON.parse(d3);
-            }
-            if(bpMetingen.length === 0) {
-                let nuTijd = new Date().toTimeString().slice(0,5);
-                bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
-            }
-            renderBpMetingen();
-
-            let d4 = localStorage.getItem('draft_vak4');
-            if(d4) {
-                document.getElementById('notities-text').value = d4;
-            }
-        }
-
-        /* --- VERPLEEGKUNDIGEN MET CHECKBOXES --- */
-        function renderNurses() {
-            let container = document.getElementById('nurse-checkbox-container');
-            container.innerHTML = '';
-
-            nursesList.forEach((name, index) => {
-                let row = document.createElement('div');
-                row.className = 'nurse-item-row';
-                let isChecked = geselecteerdeNurses.includes(name) ? 'checked' : '';
-
-                row.innerHTML = `
-                    <label>
-                        <input type="checkbox" class="chk-nurse-item" value="${name}" ${isChecked} onchange="opslaanConceptVak1()">
-                        <span>${name}</span>
-                    </label>
-                    <button class="nurse-del-btn" onclick="removeNurse(${index})">✕</button>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        function verzamelGeselecteerdeNurses() {
-            let gekozen = [];
-            document.querySelectorAll('.chk-nurse-item:checked').forEach(box => {
-                gekozen.push(box.value);
-            });
-            geselecteerdeNurses = gekozen;
-            return gekozen;
-        }
-
-        function addNurse() {
-            let input = document.getElementById('new-nurse-name');
-            let name = input.value.trim();
-            if(!name) return;
-            if(!nursesList.includes(name)) {
-                nursesList.push(name);
-                renderNurses();
-                syncToGoogle('dialyse_nurses', nursesList);
-                input.value = '';
-            } else {
-                alert("Deze naam staat al in de lijst.");
-            }
-        }
-
-        function removeNurse(index) {
-            nursesList.splice(index, 1);
-            renderNurses();
-            syncToGoogle('dialyse_nurses', nursesList);
-        }
-
-        /* --- VAK 3: MEERDERE BLOEDDRUK & HARTSLAG LOGICA --- */
-        function voegBpMetingToe() {
-            let nuTijd = new Date().toTimeString().slice(0,5);
-            bpMetingen = verzamelBpMetingenVanScherm();
-            bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
-            renderBpMetingen();
-            opslaanConceptVak3();
-        }
-
-        function verwijderBpMeting(index) {
-            bpMetingen = verzamelBpMetingenVanScherm();
-            bpMetingen.splice(index, 1);
-            if(bpMetingen.length === 0) {
-                let nuTijd = new Date().toTimeString().slice(0,5);
-                bpMetingen.push({ tijd: nuTijd, sys: '', dia: '', hr: '' });
-            }
-            renderBpMetingen();
-            opslaanConceptVak3();
-        }
+        function voegBpMetingToe() { bpMetingen = verzamelBpMetingenVanScherm(); bpMetingen.push({ tijd: new Date().toTimeString().slice(0,5), sys: '', dia: '', hr: '' }); renderBpMetingen(); opslaanConceptVak3(); }
+        function verwijderBpMeting(index) { bpMetingen = verzamelBpMetingenVanScherm(); bpMetingen.splice(index, 1); renderBpMetingen(); opslaanConceptVak3(); }
 
         function renderBpMetingen() {
-            let container = document.getElementById('bp-metingen-lijst');
-            container.innerHTML = '';
-
-            bpMetingen.forEach((m, index) => {
-                let row = document.createElement('div');
-                row.className = 'bp-row';
-                row.innerHTML = `
-                    <div class="bp-row-header">
-                        <span style="font-weight: 600; color: #0078d7;">Meting #${index + 1}</span>
-                        <button class="nurse-del-btn" onclick="verwijderBpMeting(${index})">✕</button>
-                    </div>
-                    <div class="bp-inputs">
-                        <input type="time" class="bp-tijd" value="${m.tijd || ''}" onchange="opslaanConceptVak3()" style="padding: 5px; font-size: 11px;">
-                        <input type="number" class="bp-sys" placeholder="Sys" value="${m.sys || ''}" oninput="updateBpStatus(this); opslaanConceptVak3();" style="padding: 5px; font-size: 11px;">
-                        <input type="number" class="bp-dia" placeholder="Dia" value="${m.dia || ''}" oninput="updateBpStatus(this); opslaanConceptVak3();" style="padding: 5px; font-size: 11px;">
-                        <input type="number" class="bp-hr" placeholder="HR" value="${m.hr || ''}" oninput="updateBpStatus(this); opslaanConceptVak3();" style="padding: 5px; font-size: 11px;">
-                    </div>
-                    <div class="bp-status-tag"></div>
-                `;
+            let container = document.getElementById('bp-metingen-lijst'); container.innerHTML = '';
+            bpMetingen.forEach((m, idx) => {
+                let row = document.createElement('div'); row.className = 'bp-row';
+                row.innerHTML = `<div style="display:flex; justify-style:space-between;"><span style="font-size:10px; font-weight:bold; color:#0078d7;">Meting #${idx+1}</span><button class="nurse-del-btn" onclick="verwijderBpMeting(${idx})">✕</button></div>
+                <div class="bp-inputs"><input type="time" class="bp-tijd" value="${m.tijd||''}" onchange="opslaanConceptVak3()"><input type="number" class="bp-sys" placeholder="Sys" value="${m.sys||''}" oninput="opslaanConceptVak3()"><input type="number" class="bp-dia" placeholder="Dia" value="${m.dia||''}" oninput="opslaanConceptVak3()"><input type="number" class="bp-hr" placeholder="HR" value="${m.hr||''}" oninput="opslaanConceptVak3()"></div>`;
                 container.appendChild(row);
-                
-                let sysIn = row.querySelector('.bp-sys');
-                if(m.sys || m.dia || m.hr) updateBpStatus(sysIn);
             });
         }
 
-        function updateBpStatus(el) {
-            let row = el.closest('.bp-row');
-            let sys = parseInt(row.querySelector('.bp-sys').value) || 0;
-            let dia = parseInt(row.querySelector('.bp-dia').value) || 0;
-            let hr = parseInt(row.querySelector('.bp-hr').value) || 0;
-            let tagContainer = row.querySelector('.bp-status-tag');
-
-            if (!sys && !dia && !hr) {
-                tagContainer.innerHTML = '';
-                return;
-            }
-
-            let status = 'green';
-            let msg = 'Optimaal';
-
-            if ((sys > 0 && sys < 100) || (sys >= 180 || dia >= 110) || (hr > 0 && (hr < 50 || hr > 110))) {
-                status = 'red';
-                msg = '🚨 KRITIEK';
-            } else if ((sys >= 140 || dia >= 90) || (hr >= 101 && hr <= 110)) {
-                status = 'orange';
-                msg = '⚠️ Verhoogd';
-            }
-
-            tagContainer.innerHTML = `<div class="bp-tag bp-tag-${status}">${msg}</div>`;
-        }
-
-        /* --- CLOUD SYNC & UTILITIES --- */
-        function opDroogGewichtGewijzigd() {
-            let val = document.getElementById('w-droog').value;
-            if (val) {
-                localStorage.setItem('dialyse_droog_gewicht', val);
-                syncToGoogle('dialyse_droog_gewicht', val);
-            }
-            berekenGewichtEnUF();
-        }
-
-        function toggleShuntflowInput() {
-            let chk = document.getElementById('chk-shuntflow').checked;
-            document.getElementById('shuntflow-field').style.display = chk ? 'block' : 'none';
-        }
-
-        function bewaarSyncUrl() {
-            let val = document.getElementById('sheets-url-input').value.trim();
-            googleSheetsUrl = val;
-            localStorage.setItem('google_sheets_url', googleSheetsUrl);
-            alert("Google Sheets URL opgeslagen!");
-            if(googleSheetsUrl) syncFromGoogle();
-        }
-
-        async function syncToGoogle(key, valueObj) {
-            if (!googleSheetsUrl) return;
-            try {
-                await fetch(googleSheetsUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) })
-                });
-            } catch(e) {
-                console.error("Fout bij synchroniseren naar Google:", e);
-            }
-        }
-
-        async function syncFromGoogle() {
-            if (!googleSheetsUrl) return;
-            try {
-                let res = await fetch(googleSheetsUrl);
-                let data = await res.json();
-                
-                if (data['dialyse_nurses']) {
-                    nursesList = JSON.parse(data['dialyse_nurses']);
-                }
-                renderNurses();
-
-                if (data['dialyse_droog_gewicht']) {
-                    let dGewicht = JSON.parse(data['dialyse_droog_gewicht']);
-                    document.getElementById('w-droog').value = dGewicht;
-                    localStorage.setItem('dialyse_droog_gewicht', dGewicht);
-                }
-
-                if (data['dialyse_vak1']) {
-                    let d = JSON.parse(data['dialyse_vak1']);
-                    if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
-                    if(d.aansluit) document.getElementById('t-aansluit').value = d.aansluit;
-                    if(d.afsluit) document.getElementById('t-afsluit').value = d.afsluit;
-                    if(d.verpleging && Array.isArray(d.verpleging)) {
-                        geselecteerdeNurses = d.verpleging;
-                        renderNurses();
-                    }
-                    berekenTijden();
-                }
-
-                if (data['dialyse_vak2']) {
-                    let d = JSON.parse(data['dialyse_vak2']);
-                    if(d.type) document.getElementById('w-type').value = d.type;
-                    if(d.droog) document.getElementById('w-droog').value = d.droog;
-                    if(d.pre) document.getElementById('w-pre').value = d.pre;
-                    if(d.post) document.getElementById('w-post').value = d.post;
-                    if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
-                    
-                    if(d.epo !== undefined) document.getElementById('chk-epo').checked = d.epo;
-                    if(d.ijzer !== undefined) document.getElementById('chk-ijzer').checked = d.ijzer;
-
-                    if(d.fragmin2500) {
-                        let boxes = document.querySelectorAll('.chk-f2500');
-                        d.fragmin2500.forEach((val, i) => { if(boxes[i]) boxes[i].checked = val; });
-                    }
-                    if(d.fragmin5000) {
-                        let boxes = document.querySelectorAll('.chk-f5000');
-                        d.fragmin5000.forEach((val, i) => { if(boxes[i]) boxes[i].checked = val; });
-                    }
-                    if(d.shuntflowActive !== undefined) {
-                        document.getElementById('chk-shuntflow').checked = d.shuntflowActive;
-                        toggleShuntflowInput();
-                    }
-                    if(d.shuntflowValue) document.getElementById('input-shuntflow').value = d.shuntflowValue;
-
-                    berekenGewichtEnUF();
-                }
-
-                if (data['dialyse_vak3']) {
-                    bpMetingen = JSON.parse(data['dialyse_vak3']);
-                    renderBpMetingen();
-                }
-
-                if (data['dialyse_vak4']) {
-                    let notities = JSON.parse(data['dialyse_vak4']);
-                    document.getElementById('notities-text').value = notities;
-                }
-            } catch(e) {
-                console.log("Kon data niet ophalen uit Google Sheets.");
-                renderNurses();
-            }
-        }
-
+        /* --- CLOUD SYNC & REKENMODULES --- */
+        function opDroogGewichtGewijzigd() { localStorage.setItem('dialyse_droog_gewicht', document.getElementById('w-droog').value); berekenGewichtEnUF(); }
         function opAansluitingGewijzigd() {
-            let aansluitVal = document.getElementById('t-aansluit').value;
-            if (aansluitVal) {
-                let aansluitDate = new Date(aansluitVal);
-                let afsluitDate = new Date(aansluitDate);
-                afsluitDate.setDate(afsluitDate.getDate() + 1);
-                afsluitDate.setHours(5, 30, 0, 0);
-                document.getElementById('t-afsluit').value = formatDateTimeLocal(afsluitDate);
-            }
+            let aansluit = document.getElementById('t-aansluit').value;
+            if(aansluit) { let d = new Date(aansluit); d.setDate(d.getDate() + 1); d.setHours(5, 30, 0, 0); document.getElementById('t-afsluit').value = formatDateTimeLocal(d); }
             berekenTijden();
         }
 
-        function formatDateTimeLocal(date) {
-            let yyyy = date.getFullYear();
-            let mm = String(date.getMonth() + 1).padStart(2, '0');
-            let dd = String(date.getDate()).padStart(2, '0');
-            let hh = String(date.getHours()).padStart(2, '0');
-            let min = String(date.getMinutes()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-        }
+        function formatDateTimeLocal(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`; }
 
         function berekenTijden() {
-            let afspraakVal = document.getElementById('t-afspraak').value;
-            let aansluitVal = document.getElementById('t-aansluit').value;
-            let afsluitVal = document.getElementById('t-afsluit').value;
-            let resBox = document.getElementById('resultaten-tijden');
-
-            let duurTekst = "Niet volledig ingevuld";
-            let verschilTekst = "Niet volledig ingevuld";
-
-            if (aansluitVal && afsluitVal) {
-                actieveStartTijd = new Date(aansluitVal);
-                let afsluitDate = new Date(afsluitVal);
-                actieveEindTijd = afsluitDate;
-
-                let diffMs = afsluitDate - actieveStartTijd;
-                if (diffMs > 0) {
-                    let uren = Math.floor(diffMs / (1000 * 60 * 60));
-                    let minuten = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                    duurTekst = `${uren} uur en ${minuten} minuten`;
-                } else {
-                    actieveEindTijd = null; actieveStartTijd = null;
-                }
-            } else {
-                actieveEindTijd = null; actieveStartTijd = null;
-            }
-
-            if (afspraakVal && aansluitVal) {
-                let afspraak = new Date(afspraakVal);
-                let aansluit = new Date(aansluitVal);
-                let diffAfspraakMs = aansluit - afspraak;
-                let minVerschil = Math.round(diffAfspraakMs / (1000 * 60));
-                
-                if (minVerschil === 0) verschilTekst = "Op tijd! (0 min)";
-                else if (minVerschil > 0) verschilTekst = `<span style='color:orange;'>${minVerschil} min te laat</span>`;
-                else verschilTekst = `<span style='color:green;'>${Math.abs(minVerschil)} min te vroeg</span>`;
-            }
-
-            resBox.innerHTML = `<b>Duur:</b> ${duurTekst}<br><b>Verschil:</b> ${verschilTekst}`;
+            let aansluit = document.getElementById('t-aansluit').value;
+            let afsluit = document.getElementById('t-afsluit').value;
+            if(aansluit && afsluit) { actieveStartTijd = new Date(aansluit); actieveEindTijd = new Date(afsluit); }
         }
 
         function berekenGewichtEnUF() {
@@ -804,109 +570,41 @@
             let droog = parseFloat(document.getElementById('w-droog').value) || 0;
             let pre = parseFloat(document.getElementById('w-pre').value) || 0;
             let post = parseFloat(document.getElementById('w-post').value) || 0;
-            let resBox = document.getElementById('resultaten-gewicht');
-
-            let constante = (type === 'nacht') ? 0.3 : 0.6;
-            let ufAdvies = (pre > 0 && droog > 0) ? (pre - droog + constante).toFixed(2) : "--";
-            let werkelijkUf = (pre > 0 && post > 0) ? (pre - post).toFixed(2) : "--";
-
-            resBox.innerHTML = `
-                <b>UF-Advies (${type === 'nacht' ? '0,3' : '0,6'}):</b> ${ufAdvies} kg<br>
-                <b>Werkelijke UF (Pre - Post):</b> ${werkelijkUf} kg
-            `;
+            let c = (type === 'nacht') ? 0.3 : 0.6;
+            document.getElementById('resultaten-gewicht').innerHTML = `<b>UF-Advies:</b> ${(pre > 0 && droog > 0) ? (pre - droog + c).toFixed(2) : '--'} kg<br><b>Werkelijke UF:</b> ${(pre > 0 && post > 0) ? (pre - post).toFixed(2) : '--'} kg`;
         }
 
         function updateCountdown() {
             let timerDisplay = document.getElementById('countdown-display');
             let ring = document.getElementById('progress-ring-circle');
-
-            if (!actieveStartTijd || !actieveEindTijd) {
-                timerDisplay.innerText = "--:--:--";
-                if(ring) ring.style.strokeDashoffset = circumference;
-                return;
-            }
-
-            let nu = new Date();
-            let totaalDuur = actieveEindTijd - actieveStartTijd;
-            let verstreken = nu - actieveStartTijd;
-            let restris = actieveEindTijd - nu;
-
-            if (restris <= 0) {
-                timerDisplay.innerText = "KLAAR";
-                if(ring) { ring.style.strokeDashoffset = 0; ring.style.stroke = "#00ff66"; }
-                return;
-            }
-
-            let voortgang = verstreken / totaalDuur;
-            if (voortgang < 0) voortgang = 0;
-            if (voortgang > 1) voortgang = 1;
-
-            let offset = circumference - (voortgang * circumference);
-            ring.style.strokeDashoffset = offset;
-
-            let r = Math.round(255 * (1 - voortgang) + 0 * voortgang);
-            let g = Math.round(77 * (1 - voortgang) + 255 * voortgang);
-            let b = Math.round(77 * (1 - voortgang) + 102 * voortgang);
-            ring.style.stroke = `rgb(${r}, ${g}, ${b})`;
-
-            let uren = Math.floor(restris / (1000 * 60 * 60));
-            let minuten = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60));
-            let seconden = Math.floor((restris % (1000 * 60)) / 1000);
-
-            timerDisplay.innerText = String(uren).padStart(2, '0') + ":" + String(minuten).padStart(2, '0') + ":" + String(seconden).padStart(2, '0');
+            if(!actieveStartTijd || !actieveEindTijd) { timerDisplay.innerText = "--:--:--"; return; }
+            let nu = new Date(); let restris = actieveEindTijd - nu;
+            if(restris <= 0) { timerDisplay.innerText = "KLAAR"; return; }
+            let u = Math.floor(restris / (1000 * 60 * 60)), m = Math.floor((restris % (1000 * 60 * 60)) / (1000 * 60)), s = Math.floor((restris % (1000 * 60)) / 1000);
+            timerDisplay.innerText = `${String(u).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
         }
 
-        /* --- DEFINITIEVE OPSLAG KNOPPEN --- */
-        function slaBehandelingOpDefinitief() {
-            let data = {
-                afspraak: document.getElementById('t-afspraak').value,
-                aansluit: document.getElementById('t-aansluit').value,
-                afsluit: document.getElementById('t-afsluit').value,
-                verpleging: verzamelGeselecteerdeNurses()
-            };
-            syncToGoogle('dialyse_vak1', data);
-            alert("Behandeling (Vak 1) definitief opgeslagen & gesynchroniseerd naar Google Sheets!");
+        function bewaarSyncUrl() { googleSheetsUrl = document.getElementById('sheets-url-input').value.trim(); localStorage.setItem('google_sheets_url', googleSheetsUrl); alert("Google Sheets URL opgeslagen!"); if(googleSheetsUrl) syncFromGoogle(); }
+
+        async function syncToGoogle(key, valueObj) {
+            if (!googleSheetsUrl) return;
+            try { await fetch(googleSheetsUrl, { method: 'POST', mode: 'no-cors', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ key: key, value: JSON.stringify(valueObj) }) }); } catch(e){}
         }
 
-        function slaGewichtOpDefinitief() {
-            let f2500Val = [];
-            document.querySelectorAll('.chk-f2500').forEach(box => f2500Val.push(box.checked));
-
-            let f5000Val = [];
-            document.querySelectorAll('.chk-f5000').forEach(box => f5000Val.push(box.checked));
-
-            let droogGewicht = document.getElementById('w-droog').value;
-            localStorage.setItem('dialyse_droog_gewicht', droogGewicht);
-            syncToGoogle('dialyse_droog_gewicht', droogGewicht);
-
-            let data = {
-                type: document.getElementById('w-type').value,
-                droog: droogGewicht,
-                pre: document.getElementById('w-pre').value,
-                post: document.getElementById('w-post').value,
-                gebruiktUf: document.getElementById('w-gebruikt-uf').value,
-                epo: document.getElementById('chk-epo').checked,
-                ijzer: document.getElementById('chk-ijzer').checked,
-                fragmin2500: f2500Val,
-                fragmin5000: f5000Val,
-                shuntflowActive: document.getElementById('chk-shuntflow').checked,
-                shuntflowValue: document.getElementById('input-shuntflow').value
-            };
-            syncToGoogle('dialyse_vak2', data);
-            alert("Gewicht, UF & Toediening (Vak 2) definitief opgeslagen & gesynchroniseerd!");
+        async function syncFromGoogle() {
+            if (!googleSheetsUrl) return;
+            try {
+                let res = await fetch(googleSheetsUrl); let data = await res.json();
+                if(data['dialyse_nurses']) { nursesList = JSON.parse(data['dialyse_nurses']); renderNurses(); }
+                if(data['dialyse_planning']) { planningLijst = JSON.parse(data['dialyse_planning']); renderPlanning(); }
+                if(data['dialyse_historie']) { historieRecords = JSON.parse(data['dialyse_historie']); renderHistorie(); }
+            } catch(e){}
         }
 
-        function slaBloeddrukOpDefinitief() {
-            bpMetingen = verzamelBpMetingenVanScherm();
-            syncToGoogle('dialyse_vak3', bpMetingen);
-            alert("Bloeddruk & Hartslag metingen (Vak 3) definitief opgeslagen & gesynchroniseerd!");
-        }
-
-        function slaNotitiesOpDefinitief() {
-            let notities = document.getElementById('notities-text').value;
-            syncToGoogle('dialyse_vak4', notities);
-            alert("Notities (Vak 4) definitief opgeslagen & gesynchroniseerd!");
-        }
+        function slaBehandelingOpDefinitief() { syncToGoogle('dialyse_vak1', JSON.parse(localStorage.getItem('draft_vak1'))); alert("Behandeling (Vak 1) opgeslagen!"); }
+        function slaGewichtOpDefinitief() { syncToGoogle('dialyse_vak2', JSON.parse(localStorage.getItem('draft_vak2'))); alert("Gewicht (Vak 2) opgeslagen!"); }
+        function slaBloeddrukOpDefinitief() { syncToGoogle('dialyse_vak3', JSON.parse(localStorage.getItem('draft_vak3'))); alert("Bloeddruk (Vak 3) opgeslagen!"); }
+        function slaNotitiesOpDefinitief() { syncToGoogle('dialyse_vak4', localStorage.getItem('draft_vak4')); alert("Notities (Vak 4) opgeslagen!"); }
     </script>
 </body>
 </html>
