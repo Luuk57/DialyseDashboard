@@ -215,8 +215,8 @@
             </div>
 
             <div class="form-group">
-                <label>Droog Gewicht (kg):</label>
-                <input type="number" step="0.1" id="w-droog" value="109" oninput="berekenGewichtEnUF()">
+                <label>Droog Gewicht (kg) - Permanent Bewaard:</label>
+                <input type="number" step="0.1" id="w-droog" value="109" oninput="opDroogGewichtGewijzigd()">
             </div>
 
             <div class="form-group">
@@ -317,6 +317,12 @@
             
             document.getElementById('sheets-url-input').value = googleSheetsUrl;
 
+            // Laad opgeslagen droog gewicht
+            let savedDroog = localStorage.getItem('dialyse_droog_gewicht');
+            if (savedDroog) {
+                document.getElementById('w-droog').value = savedDroog;
+            }
+
             if(googleSheetsUrl) {
                 syncFromGoogle();
             } else {
@@ -328,6 +334,15 @@
             document.getElementById('system-clock').innerText = new Date().toLocaleString();
             updateCountdown();
         }, 1000);
+
+        function opDroogGewichtGewijzigd() {
+            let val = document.getElementById('w-droog').value;
+            if (val) {
+                localStorage.setItem('dialyse_droog_gewicht', val);
+                syncToGoogle('dialyse_droog_gewicht', val);
+            }
+            berekenGewichtEnUF();
+        }
 
         function toggleShuntflowInput() {
             let chk = document.getElementById('chk-shuntflow').checked;
@@ -367,6 +382,13 @@
                 }
                 renderNurses();
 
+                // Laad droog gewicht uit Google Cloud indien aanwezig
+                if (data['dialyse_droog_gewicht']) {
+                    let dGewicht = JSON.parse(data['dialyse_droog_gewicht']);
+                    document.getElementById('w-droog').value = dGewicht;
+                    localStorage.setItem('dialyse_droog_gewicht', dGewicht);
+                }
+
                 if (data['dialyse_vak1']) {
                     let d = JSON.parse(data['dialyse_vak1']);
                     if(d.afspraak) document.getElementById('t-afspraak').value = d.afspraak;
@@ -383,7 +405,6 @@
                     if(d.post) document.getElementById('w-post').value = d.post;
                     if(d.gebruiktUf) document.getElementById('w-gebruikt-uf').value = d.gebruiktUf;
                     
-                    // Inladen van Epo, IJzer, Fragmin & Shuntflow
                     if(d.epo !== undefined) document.getElementById('chk-epo').checked = d.epo;
                     if(d.ijzer !== undefined) document.getElementById('chk-ijzer').checked = d.ijzer;
 
@@ -589,9 +610,13 @@
             let f5000Val = [];
             document.querySelectorAll('.chk-f5000').forEach(box => f5000Val.push(box.checked));
 
+            let droogGewicht = document.getElementById('w-droog').value;
+            localStorage.setItem('dialyse_droog_gewicht', droogGewicht);
+            syncToGoogle('dialyse_droog_gewicht', droogGewicht);
+
             let data = {
                 type: document.getElementById('w-type').value,
-                droog: document.getElementById('w-droog').value,
+                droog: droogGewicht,
                 pre: document.getElementById('w-pre').value,
                 post: document.getElementById('w-post').value,
                 gebruiktUf: document.getElementById('w-gebruikt-uf').value,
